@@ -103,7 +103,11 @@ export default function RoomPage() {
         <header className="editor-header">
           <div className="editor-header-left">
             <div className="editor-logo" onClick={() => router.push('/')} title="Back to home">
-              <div className="editor-logo-icon">⚡</div>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <rect width="24" height="24" rx="6" fill="url(#lg2)" />
+                <path d="M7 8h10M7 12h6M7 16h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                <defs><linearGradient id="lg2" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#ff6363" /><stop offset="1" stopColor="#ffb347" /></linearGradient></defs>
+              </svg>
               <span>CodeSync</span>
             </div>
             <span className="editor-room-name" title={roomId}>
@@ -166,17 +170,10 @@ export default function RoomPage() {
               onClick={() => setSidebarOpen(prev => !prev)}
               title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
             >
-              ☰
-            </button>
-
-            {/* Leave Room */}
-            <button
-              id="leave-room-btn"
-              className="btn-leave-room"
-              onClick={handleLeaveRoom}
-              title="Leave room"
-            >
-              ✕ Leave
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <rect x="1" y="1" width="14" height="14" rx="2" />
+                <line x1="10" y1="1" x2="10" y2="15" />
+              </svg>
             </button>
           </div>
         </header>
@@ -247,6 +244,18 @@ export default function RoomPage() {
                   <span className="sidebar-info-value">CRDT (Yjs)</span>
                 </div>
               </div>
+            </div>
+
+            {/* Leave Room — at bottom */}
+            <div className="sidebar-leave">
+              <button className="btn-leave-room" onClick={handleLeaveRoom}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Leave Room
+              </button>
             </div>
           </aside>
         </div>

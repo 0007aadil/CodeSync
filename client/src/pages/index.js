@@ -90,7 +90,11 @@ export default function Home() {
         {/* Nav */}
         <nav className="landing-nav">
           <div className="landing-nav-logo">
-            <div className="landing-nav-logo-icon">⚡</div>
+            <svg className="landing-logo-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect width="24" height="24" rx="6" fill="url(#lg)" />
+              <path d="M7 8h10M7 12h6M7 16h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+              <defs><linearGradient id="lg" x1="0" y1="0" x2="24" y2="24"><stop stopColor="#ff6363" /><stop offset="1" stopColor="#ffb347" /></linearGradient></defs>
+            </svg>
             <span>CodeSync</span>
           </div>
           <div className="landing-nav-links">
@@ -102,45 +106,15 @@ export default function Home() {
         <div className="landing-main">
           {/* Left: Hero */}
           <div className="landing-hero">
-            <div className="hero-badge">
-              <span className="hero-badge-dot" />
-              Real-time CRDT collaboration
-            </div>
             <h1>Code together,<br /><span className="gradient-text">in real time.</span></h1>
             <p className="hero-subtitle">
-              Collaborative code editor with live cursors, conflict-free sync, and VS Code-grade editing. No signup.
+              Collaborative code editor with live cursors, conflict-free CRDT sync, and VS Code-grade editing. No signup required.
             </p>
-
-            {/* Features inline */}
-            <div className="hero-features">
-              <div className="hero-feature">
-                <span className="hero-feature-icon">⚡</span>
-                <div>
-                  <div className="hero-feature-title">CRDT Sync</div>
-                  <div className="hero-feature-desc">Conflict-free editing</div>
-                </div>
-              </div>
-              <div className="hero-feature">
-                <span className="hero-feature-icon">👥</span>
-                <div>
-                  <div className="hero-feature-title">Live Cursors</div>
-                  <div className="hero-feature-desc">See others type live</div>
-                </div>
-              </div>
-              <div className="hero-feature">
-                <span className="hero-feature-icon">✦</span>
-                <div>
-                  <div className="hero-feature-title">Monaco Editor</div>
-                  <div className="hero-feature-desc">VS Code engine</div>
-                </div>
-              </div>
-              <div className="hero-feature">
-                <span className="hero-feature-icon">◆</span>
-                <div>
-                  <div className="hero-feature-title">Persistent</div>
-                  <div className="hero-feature-desc">PostgreSQL backed</div>
-                </div>
-              </div>
+            <div className="hero-pills">
+              <span className="hero-pill">⚡ Real-time sync</span>
+              <span className="hero-pill">👥 Live cursors</span>
+              <span className="hero-pill">✦ Monaco editor</span>
+              <span className="hero-pill">◆ Persistent</span>
             </div>
           </div>
 

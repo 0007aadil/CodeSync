@@ -107,11 +107,7 @@ input,textarea { font-family:inherit; color:inherit; }
   display:flex; align-items:center; gap:10px;
   font-weight:700; font-size:1rem; letter-spacing:-0.02em;
 }
-.landing-nav-logo-icon {
-  width:28px; height:28px; border-radius:8px;
-  background:linear-gradient(135deg,var(--accent-primary),var(--accent-warm));
-  display:flex; align-items:center; justify-content:center; font-size:0.8rem;
-}
+.landing-nav-logo svg { flex-shrink:0; }
 .landing-nav-links { display:flex; align-items:center; gap:0.5rem; }
 .landing-nav-link {
   padding:6px 14px; border-radius:8px;
@@ -125,7 +121,7 @@ input,textarea { font-family:inherit; color:inherit; }
   flex:1; display:grid; grid-template-columns:1fr 420px;
   gap:4rem; align-items:center;
   max-width:1100px; width:100%; margin:0 auto;
-  padding:56px 3rem 2rem; /* 56px = nav height */
+  padding:56px 3rem 2rem;
   position:relative; z-index:1;
   min-height:100vh;
   animation:fadeIn 0.6s ease;
@@ -135,18 +131,7 @@ input,textarea { font-family:inherit; color:inherit; }
 .landing-hero {
   display:flex; flex-direction:column; justify-content:center;
 }
-.hero-badge {
-  display:inline-flex; align-items:center; gap:8px;
-  padding:5px 14px; background:rgba(255,99,99,0.08);
-  border:1px solid rgba(255,99,99,0.15); border-radius:100px;
-  font-size:0.75rem; font-weight:500; color:var(--accent-primary);
-  margin-bottom:1.5rem; animation:slideDown 0.5s ease;
-  width:fit-content;
-}
-.hero-badge-dot {
-  width:6px; height:6px; border-radius:50%;
-  background:var(--accent-primary); animation:pulse 2s ease infinite;
-}
+.landing-logo-svg { flex-shrink:0; }
 .landing-hero h1 {
   font-size:clamp(2.5rem,4.5vw,3.8rem); font-weight:800;
   line-height:1.08; letter-spacing:-0.04em;
@@ -162,34 +147,28 @@ input,textarea { font-family:inherit; color:inherit; }
   font-size:1.05rem; color:var(--text-secondary);
   max-width:440px; line-height:1.7;
   animation:slideUp 0.7s ease; font-weight:400;
-  margin-bottom:2.5rem;
+  margin-bottom:1.5rem;
 }
 
-/* Inline Features */
-.hero-features {
-  display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;
+/* Hero feature pills */
+.hero-pills {
+  display:flex; flex-wrap:wrap; gap:0.5rem;
   animation:slideUp 0.9s ease;
 }
-.hero-feature {
-  display:flex; align-items:center; gap:0.65rem;
-  padding:0.65rem 0.75rem;
-  background:rgba(255,255,255,0.03);
+.hero-pill {
+  padding:6px 14px;
+  background:rgba(255,255,255,0.04);
   border:1px solid var(--border-subtle);
-  border-radius:10px;
+  border-radius:100px;
+  font-size:0.75rem; font-weight:500;
+  color:var(--text-secondary);
   transition:all var(--transition-fast);
 }
-.hero-feature:hover {
-  background:rgba(255,255,255,0.05);
+.hero-pill:hover {
+  background:rgba(255,255,255,0.07);
   border-color:var(--border-default);
+  color:#fff;
 }
-.hero-feature-icon {
-  width:34px; height:34px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(255,99,99,0.08); border-radius:8px;
-  font-size:1rem;
-}
-.hero-feature-title { font-size:0.8rem; font-weight:600; color:#fff; }
-.hero-feature-desc { font-size:0.68rem; color:var(--text-muted); }
 
 /* Right: Action Panel */
 .landing-panel {
@@ -397,12 +376,7 @@ input,textarea { font-family:inherit; color:inherit; }
   cursor:pointer; transition:opacity var(--transition-fast);
 }
 .editor-logo:hover { opacity:0.8; }
-.editor-logo-icon {
-  width:26px; height:26px; border-radius:7px;
-  background:linear-gradient(135deg,var(--accent-primary),var(--accent-warm));
-  display:flex; align-items:center; justify-content:center;
-  font-size:0.75rem;
-}
+.editor-logo svg { flex-shrink:0; }
 .editor-room-name {
   font-size:0.8rem; color:var(--text-muted);
   padding:3px 10px; background:rgba(255,255,255,0.04);
@@ -579,20 +553,26 @@ input,textarea { font-family:inherit; color:inherit; }
   font-size:0.75rem; color:var(--text-secondary);
 }
 
-/* Leave room button */
+/* Sidebar leave */
+.sidebar-leave {
+  margin-top:auto; padding-top:1rem;
+  border-top:1px solid var(--border-subtle);
+}
 .btn-leave-room {
-  display:flex; align-items:center; gap:4px;
-  padding:0.35rem 0.65rem;
-  background:rgba(255,99,99,0.08);
-  border:1px solid rgba(255,99,99,0.2);
-  border-radius:6px; font-size:0.78rem;
+  display:flex; align-items:center; justify-content:center;
+  gap:6px; width:100%;
+  padding:0.55rem 0.75rem;
+  background:rgba(255,99,99,0.06);
+  border:1px solid rgba(255,99,99,0.15);
+  border-radius:8px; font-size:0.8rem; font-weight:500;
   color:var(--accent-primary); cursor:pointer;
   transition:all var(--transition-fast);
 }
 .btn-leave-room:hover {
-  background:rgba(255,99,99,0.15);
-  border-color:rgba(255,99,99,0.4);
+  background:rgba(255,99,99,0.14);
+  border-color:rgba(255,99,99,0.35);
 }
+.btn-leave-room svg { flex-shrink:0; }
 
 /* Active state for sidebar toggle */
 .btn-copy-room.active {
