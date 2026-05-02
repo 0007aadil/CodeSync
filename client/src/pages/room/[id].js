@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useCollaboration } from '@/hooks/useCollaboration';
@@ -12,8 +12,9 @@ export default function RoomPage() {
   const [language, setLanguage] = useState('javascript');
   const [roomName, setRoomName] = useState('');
   const [copied, setCopied] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toast, setToast] = useState(null);
+  const prevUsersRef = useRef(0);
 
   const {
     bindEditor,
@@ -26,18 +27,22 @@ export default function RoomPage() {
     userAvatar,
   } = useCollaboration(roomId, { name: uname || undefined, avatar: urlAvatar || undefined });
 
-  // Set language and room name from URL params
   useEffect(() => {
     if (lang) setLanguage(lang);
     if (name) setRoomName(decodeURIComponent(name));
   }, [lang, name]);
 
-  // Show toast when users join/leave
+  // Toast on join/leave
   useEffect(() => {
-    if (remoteUsers.length > 0) {
-      const lastUser = remoteUsers[remoteUsers.length - 1];
+    const prev = prevUsersRef.current;
+    const curr = remoteUsers.length;
+    if (curr > prev && curr > 0) {
+      const lastUser = remoteUsers[curr - 1];
       showToast(`${lastUser.avatar || '🦊'} ${lastUser.name} joined`, 'success');
+    } else if (curr < prev && prev > 0) {
+      showToast('A user left the room', 'error');
     }
+    prevUsersRef.current = curr;
   }, [remoteUsers.length]);
 
   const showToast = useCallback((message, type = 'success') => {
@@ -75,10 +80,14 @@ export default function RoomPage() {
     window.history.replaceState({}, '', url);
   }, []);
 
+  const handleLeaveRoom = useCallback(() => {
+    router.push('/');
+  }, [router]);
+
   if (!roomId) return null;
 
   const allUsers = [
-    { clientId, name: userName, color: userColor, avatar: userAvatar || '🦊', isYou: true },
+    { clientId, name: userName, color: userColor, avatar: userAvatar || '🦊', isYou: true, isTyping: false },
     ...remoteUsers.map(u => ({ ...u, isYou: false })),
   ];
 
@@ -109,7 +118,7 @@ export default function RoomPage() {
               <span>{connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}</span>
             </div>
 
-            {/* Connected Users with Avatars */}
+            {/* Connected Users */}
             <div className="connected-users">
               {allUsers.slice(0, 5).map((user, idx) => (
                 <div
@@ -153,19 +162,29 @@ export default function RoomPage() {
             {/* Toggle Sidebar */}
             <button
               id="toggle-sidebar-btn"
-              className="btn-copy-room"
-              onClick={() => setShowSidebar(!showSidebar)}
-              title={showSidebar ? 'Hide sidebar' : 'Show sidebar'}
+              className={`btn-copy-room ${sidebarOpen ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(prev => !prev)}
+              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
             >
-              {showSidebar ? '◨' : '◧'}
+              ☰
+            </button>
+
+            {/* Leave Room */}
+            <button
+              id="leave-room-btn"
+              className="btn-leave-room"
+              onClick={handleLeaveRoom}
+              title="Leave room"
+            >
+              ✕ Leave
             </button>
           </div>
         </header>
 
         {/* Editor + Sidebar */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="editor-body">
           {/* Editor */}
-          <div style={{ flex: 1, position: 'relative' }}>
+          <div className="editor-main">
             {!isReady && connectionStatus === 'connecting' && (
               <div className="editor-loading">
                 <div className="loading-spinner" />
@@ -176,64 +195,60 @@ export default function RoomPage() {
           </div>
 
           {/* Sidebar */}
-          {showSidebar && (
-            <aside className="editor-sidebar">
-              <div className="sidebar-section">
-                <h4>Connected Users ({allUsers.length})</h4>
-                <div className="sidebar-user-list">
-                  {allUsers.map((user) => (
-                    <div key={user.clientId} className="sidebar-user">
-                      <span className="sidebar-user-avatar">{user.avatar}</span>
-                      <div className="sidebar-user-info">
-                        <span className="sidebar-user-name" style={{ color: user.color }}>
-                          {user.name} {user.isYou && <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>(You)</span>}
-                        </span>
-                        {user.cursor && (
-                          <span className="sidebar-user-line">Ln {user.cursor.lineNumber}</span>
+          <aside className={`editor-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+            <div className="sidebar-section">
+              <h4>Connected Users ({allUsers.length})</h4>
+              <div className="sidebar-user-list">
+                {allUsers.map((user) => (
+                  <div key={user.clientId} className="sidebar-user">
+                    <span className="sidebar-user-avatar">{user.avatar}</span>
+                    <div className="sidebar-user-info">
+                      <span className="sidebar-user-name" style={{ color: user.color }}>
+                        {user.name}
+                        {user.isYou && <span className="sidebar-you-tag">You</span>}
+                      </span>
+                      <span className="sidebar-user-status">
+                        {user.isTyping ? (
+                          <span className="typing-indicator">
+                            <span className="typing-dot" />
+                            <span className="typing-dot" />
+                            <span className="typing-dot" />
+                            typing...
+                          </span>
+                        ) : user.cursor ? (
+                          <span>Ln {user.cursor.lineNumber}</span>
+                        ) : (
+                          <span>Idle</span>
                         )}
-                      </div>
+                      </span>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
+            </div>
 
-              <div className="sidebar-section">
-                <h4>Room Info</h4>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>Room ID:</span>
-                    <br />
-                    <code className="mono" style={{ fontSize: '0.75rem' }}>{roomId}</code>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>Language:</span>
-                    <br />
-                    <span>{LANGUAGES.find(l => l.value === language)?.label || language}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>Your name:</span>
-                    <br />
-                    <span style={{ color: userColor }}>{userAvatar} {userName}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>Sync:</span>
-                    <br />
-                    <span>CRDT (Yjs/YATA)</span>
-                  </div>
+            <div className="sidebar-section">
+              <h4>Room Info</h4>
+              <div className="sidebar-info-grid">
+                <div className="sidebar-info-item">
+                  <span className="sidebar-info-label">Room</span>
+                  <code className="mono sidebar-info-value">{roomId?.slice(0, 10)}</code>
+                </div>
+                <div className="sidebar-info-item">
+                  <span className="sidebar-info-label">Language</span>
+                  <span className="sidebar-info-value">{LANGUAGES.find(l => l.value === language)?.label || language}</span>
+                </div>
+                <div className="sidebar-info-item">
+                  <span className="sidebar-info-label">You</span>
+                  <span className="sidebar-info-value" style={{ color: userColor }}>{userAvatar} {userName}</span>
+                </div>
+                <div className="sidebar-info-item">
+                  <span className="sidebar-info-label">Sync</span>
+                  <span className="sidebar-info-value">CRDT (Yjs)</span>
                 </div>
               </div>
-
-              <div className="sidebar-section" style={{ marginTop: 'auto' }}>
-                <h4>How it Works</h4>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                  <p>Every character gets a unique ID. Edits are conflict-free — 
-                  applying them in any order produces the same result (CRDT guarantee).</p>
-                  <p style={{ marginTop: '0.5rem' }}>Cursors sync separately as lightweight 
-                  ephemeral messages.</p>
-                </div>
-              </div>
-            </aside>
-          )}
+            </div>
+          </aside>
         </div>
       </div>
 

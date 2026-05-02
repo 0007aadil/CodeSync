@@ -61,6 +61,9 @@ export function useCollaboration(roomId, overrides = {}) {
   const isLocalEditRef = useRef(false);
   // Flag to prevent echo loops: yjs observe → editor → yjs
   const isRemoteEditRef = useRef(false);
+  // Typing indicator timer
+  const typingTimerRef = useRef(null);
+  const isTypingRef = useRef(false);
 
   // Initialize client identity (once)
   if (!clientIdRef.current) {
@@ -104,13 +107,14 @@ export function useCollaboration(roomId, overrides = {}) {
   /**
    * Send awareness state (cursor, user info)
    */
-  const sendAwareness = useCallback((cursor, selection) => {
+  const sendAwareness = useCallback((cursor, selection, isTyping) => {
     const state = {
       name: userNameRef.current,
       color: userColorRef.current,
       avatar: userAvatarRef.current,
       cursor: cursor || null,
       selection: selection || null,
+      isTyping: isTyping !== undefined ? isTyping : isTypingRef.current,
     };
     
     const payload = new TextEncoder().encode(JSON.stringify(state));
@@ -241,6 +245,7 @@ export function useCollaboration(roomId, overrides = {}) {
           avatar: s.avatar || '🦊',
           cursor: s.cursor || null,
           selection: s.selection || null,
+          isTyping: s.isTyping || false,
         }));
       setRemoteUsers(users);
       updateCursorDecorations(users);
@@ -424,6 +429,16 @@ export function useCollaboration(roomId, overrides = {}) {
       }, 'monaco');
 
       isLocalEditRef.current = false;
+
+      // Mark as typing
+      isTypingRef.current = true;
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        isTypingRef.current = false;
+        // Send awareness with isTyping=false
+        const pos = editor.getPosition();
+        if (pos) sendAwareness({ lineNumber: pos.lineNumber, column: pos.column }, null, false);
+      }, 2000);
     });
 
     // Listen for Yjs updates → send to server
