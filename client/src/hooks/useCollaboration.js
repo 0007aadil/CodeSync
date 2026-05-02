@@ -38,7 +38,7 @@ function generateClientId() {
  * Custom hook: useCollaboration
  * Manages Yjs document, WebSocket connection, and awareness (cursors)
  */
-export function useCollaboration(roomId) {
+export function useCollaboration(roomId, overrides = {}) {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [isReady, setIsReady] = useState(false);
@@ -74,14 +74,16 @@ export function useCollaboration(roomId) {
       try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-client-id', clientIdRef.current); } catch (e) {}
     }
     
-    let storedName = null;
-    try { storedName = typeof window !== 'undefined' ? sessionStorage.getItem('collab-user-name') : null; } catch (e) {}
+    // Overrides from URL params take priority over sessionStorage
+    let storedName = overrides.name || null;
+    try { if (!storedName) storedName = typeof window !== 'undefined' ? sessionStorage.getItem('collab-user-name') : null; } catch (e) {}
     userNameRef.current = storedName || randomName();
     try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-name', userNameRef.current); } catch (e) {}
     
-    let storedAvatar = null;
-    try { storedAvatar = typeof window !== 'undefined' ? sessionStorage.getItem('collab-user-avatar') : null; } catch (e) {}
+    let storedAvatar = overrides.avatar || null;
+    try { if (!storedAvatar) storedAvatar = typeof window !== 'undefined' ? sessionStorage.getItem('collab-user-avatar') : null; } catch (e) {}
     userAvatarRef.current = storedAvatar || '🦊';
+    try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-avatar', userAvatarRef.current); } catch (e) {}
     
     // Assign color based on hash of client ID
     const hash = clientIdRef.current.split('').reduce((a, c) => a + c.charCodeAt(0), 0);

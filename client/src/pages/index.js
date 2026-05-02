@@ -2,31 +2,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { nanoid } from 'nanoid';
+import { LANGUAGES, AVATARS } from '@/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
-const LANGUAGES = [
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'csharp', label: 'C#' },
-  { value: 'go', label: 'Go' },
-  { value: 'rust', label: 'Rust' },
-  { value: 'html', label: 'HTML' },
-  { value: 'css', label: 'CSS' },
-  { value: 'json', label: 'JSON' },
-  { value: 'sql', label: 'SQL' },
-  { value: 'markdown', label: 'Markdown' },
-  { value: 'yaml', label: 'YAML' },
-];
-
-const AVATARS = [
-  '🦊', '🐻', '🐼', '🐨', '🦁', '🐯', '🐸', '🐵',
-  '🦉', '🦅', '🐺', '🦄', '🐲', '🐙', '🦋', '🐧',
-  '🐰', '🦝', '🦈', '🐬', '🦜', '🐊', '🦎', '🐢',
-];
 
 export default function Home() {
   const router = useRouter();
@@ -308,6 +286,11 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <footer className="landing-footer">
+          Built with <a href="https://yjs.dev" target="_blank" rel="noopener noreferrer">Yjs CRDT</a> · <a href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener noreferrer">Monaco Editor</a> · <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">Next.js</a> · <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer">View Source</a>
+        </footer>
       </div>
     </>
   );

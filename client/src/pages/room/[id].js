@@ -3,23 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useCollaboration } from '@/hooks/useCollaboration';
 import CollabEditor from '@/components/CollabEditor';
-
-const LANGUAGES = [
-  { value: 'javascript', label: 'JavaScript' },
-  { value: 'typescript', label: 'TypeScript' },
-  { value: 'python', label: 'Python' },
-  { value: 'java', label: 'Java' },
-  { value: 'cpp', label: 'C++' },
-  { value: 'csharp', label: 'C#' },
-  { value: 'go', label: 'Go' },
-  { value: 'rust', label: 'Rust' },
-  { value: 'html', label: 'HTML' },
-  { value: 'css', label: 'CSS' },
-  { value: 'json', label: 'JSON' },
-  { value: 'sql', label: 'SQL' },
-  { value: 'markdown', label: 'Markdown' },
-  { value: 'yaml', label: 'YAML' },
-];
+import { LANGUAGES } from '@/constants';
 
 export default function RoomPage() {
   const router = useRouter();
@@ -31,14 +15,6 @@ export default function RoomPage() {
   const [showSidebar, setShowSidebar] = useState(true);
   const [toast, setToast] = useState(null);
 
-  // Store avatar/name from URL params into session before hook reads them
-  useEffect(() => {
-    try {
-      if (uname) sessionStorage.setItem('collab-user-name', uname);
-      if (urlAvatar) sessionStorage.setItem('collab-user-avatar', urlAvatar);
-    } catch (e) {}
-  }, [uname, urlAvatar]);
-
   const {
     bindEditor,
     connectionStatus,
@@ -48,7 +24,7 @@ export default function RoomPage() {
     userName,
     userColor,
     userAvatar,
-  } = useCollaboration(roomId);
+  } = useCollaboration(roomId, { name: uname || undefined, avatar: urlAvatar || undefined });
 
   // Set language and room name from URL params
   useEffect(() => {

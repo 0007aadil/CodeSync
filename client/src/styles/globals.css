@@ -106,7 +106,7 @@ input,textarea { font-family:inherit; color:inherit; }
 .landing-content {
   position:relative; z-index:1; flex:1;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:2.5rem 1.5rem;
+  padding:4.5rem 1.5rem 2.5rem;
   animation:fadeIn 0.6s ease;
 }
 
@@ -223,6 +223,7 @@ input,textarea { font-family:inherit; color:inherit; }
   padding-right:32px;
 }
 .select-field:focus { border-color:var(--accent-primary); }
+.select-field option, option { background:#111; color:#eee; }
 
 .btn-primary {
   width:100%; padding:0.8rem 1.5rem;
@@ -522,4 +523,18 @@ input,textarea { font-family:inherit; color:inherit; }
 @media (max-width:480px) {
   .features { grid-template-columns:1fr; }
   .join-room { flex-direction:column; }
+  .avatar-picker { grid-template-columns:repeat(6,1fr); }
 }
+
+/* Footer */
+.landing-footer {
+  position:relative; z-index:1;
+  padding:2rem 0; text-align:center;
+  border-top:1px solid var(--border-subtle);
+  font-size:0.75rem; color:var(--text-muted);
+}
+.landing-footer a {
+  color:var(--text-secondary);
+  transition:color var(--transition-fast);
+}
+.landing-footer a:hover { color:var(--accent-primary); }
