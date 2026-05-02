@@ -19,6 +19,11 @@ app.use(cors({
     if (origin.match(/^https?:\/\/localhost(:\d+)?$/)) {
       return callback(null, true);
     }
+    // Allow configured production origins (comma-separated)
+    const allowedOrigins = (process.env.CORS_ORIGIN || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (allowedOrigins.some(allowed => origin === allowed || origin.endsWith(allowed))) {
+      return callback(null, true);
+    }
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -98,7 +103,7 @@ wss.on('connection', (ws, req) => {
 async function start() {
   await initPersistence();
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔══════════════════════════════════════════════╗
 ║   🚀 Collaborative Editor Server            ║
