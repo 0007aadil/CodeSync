@@ -1,0 +1,17 @@
+{
+  "name": "collab-editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Real-time collaborative code editor with CRDT, Monaco, and WebSockets",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
