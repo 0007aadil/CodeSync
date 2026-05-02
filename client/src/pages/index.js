@@ -79,7 +79,19 @@ export default function Home() {
 
       <div className="landing-page">
         <div className="landing-bg" />
-        
+
+        {/* Navigation */}
+        <nav className="landing-nav">
+          <div className="landing-nav-logo">
+            <div className="landing-nav-logo-icon">⚡</div>
+            <span>CodeSync</span>
+          </div>
+          <div className="landing-nav-links">
+            <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer" className="landing-nav-link">GitHub</a>
+            <a href="#features" className="landing-nav-link">Features</a>
+          </div>
+        </nav>
+
         <div className="landing-content">
           {/* Hero */}
           <div className="hero">
@@ -94,9 +106,8 @@ export default function Home() {
             </h1>
             
             <p className="hero-subtitle">
-              A collaborative code editor where multiple people can edit the same file 
-              simultaneously. See each other&apos;s cursors live, with conflict-free 
-              merging powered by Yjs CRDT.
+              A collaborative code editor where multiple people can edit simultaneously. 
+              See each other&apos;s cursors live, with conflict-free merging powered by Yjs CRDT.
             </p>
           </div>
 
@@ -131,7 +142,7 @@ export default function Home() {
               </div>
               
               <button id="create-room-btn" type="submit" className="btn-primary" disabled={isCreating}>
-                {isCreating ? '⏳ Creating...' : '⚡ Create New Room'}
+                {isCreating ? 'Creating...' : 'Create New Room →'}
               </button>
             </div>
           </form>
@@ -157,7 +168,7 @@ export default function Home() {
           {/* Active Rooms */}
           {rooms.length > 0 && (
             <div className="active-rooms">
-              <h3>🟢 Active Rooms</h3>
+              <h3>● Active Rooms</h3>
               <div className="room-list">
                 {rooms.map((room) => (
                   <div
@@ -180,26 +191,26 @@ export default function Home() {
           )}
 
           {/* Features */}
-          <div className="features">
+          <div className="features" id="features">
             <div className="feature-card">
               <div className="feature-icon">⚡</div>
               <div className="feature-title">Real-time Sync</div>
-              <div className="feature-desc">CRDT-powered conflict-free editing with instant local feedback</div>
+              <div className="feature-desc">CRDT-powered conflict-free editing with instant feedback</div>
             </div>
             <div className="feature-card">
               <div className="feature-icon">👥</div>
               <div className="feature-title">Live Cursors</div>
-              <div className="feature-desc">See where other users are typing and selecting in real time</div>
+              <div className="feature-desc">See where others are typing and selecting in real time</div>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🎨</div>
+              <div className="feature-icon">✦</div>
               <div className="feature-title">Monaco Editor</div>
-              <div className="feature-desc">VS Code-grade editor with syntax highlighting and IntelliSense</div>
+              <div className="feature-desc">VS Code-grade editor with syntax highlighting</div>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔒</div>
+              <div className="feature-icon">◆</div>
               <div className="feature-title">Persistent</div>
-              <div className="feature-desc">Documents saved to PostgreSQL with Redis caching for speed</div>
+              <div className="feature-desc">Documents saved to PostgreSQL with Redis caching</div>
             </div>
           </div>
         </div>
