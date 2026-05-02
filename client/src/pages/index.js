@@ -22,13 +22,33 @@ const LANGUAGES = [
   { value: 'yaml', label: 'YAML' },
 ];
 
+const AVATARS = [
+  '🦊', '🐻', '🐼', '🐨', '🦁', '🐯', '🐸', '🐵',
+  '🦉', '🦅', '🐺', '🦄', '🐲', '🐙', '🦋', '🐧',
+  '🐰', '🦝', '🦈', '🐬', '🦜', '🐊', '🦎', '🐢',
+];
+
 export default function Home() {
   const router = useRouter();
   const [roomName, setRoomName] = useState('');
+  const [userName, setUserName] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState('🦊');
   const [language, setLanguage] = useState('javascript');
   const [joinCode, setJoinCode] = useState('');
+  const [joinName, setJoinName] = useState('');
+  const [joinAvatar, setJoinAvatar] = useState('🐻');
   const [rooms, setRooms] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+
+  // Restore saved identity
+  useEffect(() => {
+    try {
+      const savedName = sessionStorage.getItem('collab-user-name');
+      const savedAvatar = sessionStorage.getItem('collab-user-avatar');
+      if (savedName) { setUserName(savedName); setJoinName(savedName); }
+      if (savedAvatar) { setSelectedAvatar(savedAvatar); setJoinAvatar(savedAvatar); }
+    } catch (e) {}
+  }, []);
 
   // Fetch active rooms
   useEffect(() => {
@@ -44,28 +64,39 @@ export default function Home() {
         const data = await res.json();
         setRooms(data.filter(r => r.active && r.clients > 0));
       }
-    } catch (err) {
-      // Server might not be running yet
-    }
+    } catch (err) {}
   }
 
   function handleCreateRoom(e) {
     e.preventDefault();
     setIsCreating(true);
     const roomId = nanoid(10);
-    const name = roomName.trim() || `Room ${roomId.slice(0, 4)}`;
-    router.push(`/room/${roomId}?lang=${language}&name=${encodeURIComponent(name)}`);
+    const rName = roomName.trim() || `Room ${roomId.slice(0, 4)}`;
+    const uName = userName.trim() || '';
+    // Save to session
+    try {
+      if (uName) sessionStorage.setItem('collab-user-name', uName);
+      sessionStorage.setItem('collab-user-avatar', selectedAvatar);
+    } catch (e) {}
+    const params = new URLSearchParams({ lang: language, name: rName, avatar: selectedAvatar });
+    if (uName) params.set('uname', uName);
+    router.push(`/room/${roomId}?${params.toString()}`);
   }
 
   function handleJoinRoom(e) {
     e.preventDefault();
     const code = joinCode.trim();
     if (!code) return;
-    
-    // Support full URL or just room ID
     const match = code.match(/\/room\/([a-zA-Z0-9_-]+)/);
     const roomId = match ? match[1] : code;
-    router.push(`/room/${roomId}`);
+    const uName = joinName.trim() || '';
+    try {
+      if (uName) sessionStorage.setItem('collab-user-name', uName);
+      sessionStorage.setItem('collab-user-avatar', joinAvatar);
+    } catch (e) {}
+    const params = new URLSearchParams({ avatar: joinAvatar });
+    if (uName) params.set('uname', uName);
+    router.push(`/room/${roomId}?${params.toString()}`);
   }
 
   return (
@@ -99,12 +130,10 @@ export default function Home() {
               <span className="hero-badge-dot" />
               Real-time collaboration powered by CRDT
             </div>
-            
             <h1>
               Code together,{' '}
               <span className="gradient-text">in real time</span>
             </h1>
-            
             <p className="hero-subtitle">
               A collaborative code editor where multiple people can edit simultaneously. 
               See each other&apos;s cursors live, with conflict-free merging powered by Yjs CRDT.
@@ -114,6 +143,38 @@ export default function Home() {
           {/* Create Room */}
           <form className="create-room" onSubmit={handleCreateRoom}>
             <div className="create-room-card">
+              {/* Your Identity */}
+              <div className="input-group">
+                <label className="input-label">Your Identity</label>
+                <input
+                  id="user-name-input"
+                  type="text"
+                  className="input-field"
+                  placeholder="Your display name..."
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+
+              {/* Avatar Picker */}
+              <div className="input-group">
+                <label className="input-label">Choose Your Avatar</label>
+                <div className="avatar-picker">
+                  {AVATARS.map((av) => (
+                    <button
+                      key={av}
+                      type="button"
+                      className={`avatar-option ${selectedAvatar === av ? 'selected' : ''}`}
+                      onClick={() => setSelectedAvatar(av)}
+                    >
+                      {av}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Room Settings */}
               <div className="input-group">
                 <label className="input-label">Room Settings</label>
                 <div className="input-row">
@@ -140,7 +201,7 @@ export default function Home() {
                   </select>
                 </div>
               </div>
-              
+
               <button id="create-room-btn" type="submit" className="btn-primary" disabled={isCreating}>
                 {isCreating ? 'Creating...' : 'Create New Room →'}
               </button>
@@ -151,18 +212,55 @@ export default function Home() {
           <div className="divider-or">or join an existing room</div>
 
           {/* Join Room */}
-          <form className="join-room" onSubmit={handleJoinRoom}>
-            <input
-              id="join-room-input"
-              type="text"
-              className="input-field"
-              placeholder="Paste room URL or room ID..."
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-            />
-            <button id="join-room-btn" type="submit" className="btn-secondary">
-              Join →
-            </button>
+          <form className="join-room-section" onSubmit={handleJoinRoom}>
+            <div className="create-room-card">
+              <div className="input-group">
+                <label className="input-label">Your Identity</label>
+                <div className="input-row">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Your display name..."
+                    value={joinName}
+                    onChange={(e) => setJoinName(e.target.value)}
+                    maxLength={30}
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Choose Avatar</label>
+                <div className="avatar-picker avatar-picker-sm">
+                  {AVATARS.slice(0, 12).map((av) => (
+                    <button
+                      key={av}
+                      type="button"
+                      className={`avatar-option ${joinAvatar === av ? 'selected' : ''}`}
+                      onClick={() => setJoinAvatar(av)}
+                    >
+                      {av}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Room URL or ID</label>
+                <div className="input-row">
+                  <input
+                    id="join-room-input"
+                    type="text"
+                    className="input-field"
+                    placeholder="Paste room URL or room ID..."
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value)}
+                  />
+                  <button id="join-room-btn" type="submit" className="btn-secondary">
+                    Join →
+                  </button>
+                </div>
+              </div>
+            </div>
           </form>
 
           {/* Active Rooms */}
@@ -171,11 +269,7 @@ export default function Home() {
               <h3>● Active Rooms</h3>
               <div className="room-list">
                 {rooms.map((room) => (
-                  <div
-                    key={room.id}
-                    className="room-item"
-                    onClick={() => router.push(`/room/${room.id}`)}
-                  >
+                  <div key={room.id} className="room-item" onClick={() => router.push(`/room/${room.id}`)}>
                     <div className="room-item-info">
                       <span className="room-item-name">{room.name || room.id}</span>
                       <span className="room-item-lang">{room.language || 'javascript'}</span>

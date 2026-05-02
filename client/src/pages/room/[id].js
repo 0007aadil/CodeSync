@@ -23,13 +23,21 @@ const LANGUAGES = [
 
 export default function RoomPage() {
   const router = useRouter();
-  const { id: roomId, lang, name } = router.query;
+  const { id: roomId, lang, name, avatar: urlAvatar, uname } = router.query;
   
   const [language, setLanguage] = useState('javascript');
   const [roomName, setRoomName] = useState('');
   const [copied, setCopied] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [toast, setToast] = useState(null);
+
+  // Store avatar/name from URL params into session before hook reads them
+  useEffect(() => {
+    try {
+      if (uname) sessionStorage.setItem('collab-user-name', uname);
+      if (urlAvatar) sessionStorage.setItem('collab-user-avatar', urlAvatar);
+    } catch (e) {}
+  }, [uname, urlAvatar]);
 
   const {
     bindEditor,
@@ -39,6 +47,7 @@ export default function RoomPage() {
     clientId,
     userName,
     userColor,
+    userAvatar,
   } = useCollaboration(roomId);
 
   // Set language and room name from URL params
@@ -51,7 +60,7 @@ export default function RoomPage() {
   useEffect(() => {
     if (remoteUsers.length > 0) {
       const lastUser = remoteUsers[remoteUsers.length - 1];
-      showToast(`${lastUser.name} joined`, 'success');
+      showToast(`${lastUser.avatar || '🦊'} ${lastUser.name} joined`, 'success');
     }
   }, [remoteUsers.length]);
 
@@ -72,7 +81,6 @@ export default function RoomPage() {
       showToast('Room URL copied!', 'success');
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      // Fallback
       const input = document.createElement('input');
       input.value = url;
       document.body.appendChild(input);
@@ -86,7 +94,6 @@ export default function RoomPage() {
 
   const handleLanguageChange = useCallback((e) => {
     setLanguage(e.target.value);
-    // Update URL without navigation
     const url = new URL(window.location);
     url.searchParams.set('lang', e.target.value);
     window.history.replaceState({}, '', url);
@@ -95,8 +102,8 @@ export default function RoomPage() {
   if (!roomId) return null;
 
   const allUsers = [
-    { clientId, name: `${userName} (You)`, color: userColor },
-    ...remoteUsers,
+    { clientId, name: userName, color: userColor, avatar: userAvatar || '🦊', isYou: true },
+    ...remoteUsers.map(u => ({ ...u, isYou: false })),
   ];
 
   return (
@@ -110,15 +117,10 @@ export default function RoomPage() {
         {/* Header */}
         <header className="editor-header">
           <div className="editor-header-left">
-            <div 
-              className="editor-logo" 
-              onClick={() => router.push('/')}
-              title="Back to home"
-            >
+            <div className="editor-logo" onClick={() => router.push('/')} title="Back to home">
               <div className="editor-logo-icon">⚡</div>
               <span>CodeSync</span>
             </div>
-            
             <span className="editor-room-name" title={roomId}>
               {roomName || roomId}
             </span>
@@ -131,17 +133,17 @@ export default function RoomPage() {
               <span>{connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}</span>
             </div>
 
-            {/* Connected Users */}
+            {/* Connected Users with Avatars */}
             <div className="connected-users">
               {allUsers.slice(0, 5).map((user, idx) => (
                 <div
                   key={user.clientId}
                   className="user-avatar"
                   style={{ backgroundColor: user.color, zIndex: allUsers.length - idx }}
-                  title={user.name}
+                  title={user.isYou ? `${user.name} (You)` : user.name}
                 >
-                  {user.name.charAt(0).toUpperCase()}
-                  <span className="user-avatar-tooltip">{user.name}</span>
+                  <span className="user-avatar-emoji">{user.avatar}</span>
+                  <span className="user-avatar-tooltip">{user.isYou ? `${user.name} (You)` : user.name}</span>
                 </div>
               ))}
               {allUsers.length > 5 && (
@@ -194,10 +196,7 @@ export default function RoomPage() {
                 <div className="loading-text">Connecting to room...</div>
               </div>
             )}
-            <CollabEditor
-              language={language}
-              onEditorReady={handleEditorReady}
-            />
+            <CollabEditor language={language} onEditorReady={handleEditorReady} />
           </div>
 
           {/* Sidebar */}
@@ -208,16 +207,15 @@ export default function RoomPage() {
                 <div className="sidebar-user-list">
                   {allUsers.map((user) => (
                     <div key={user.clientId} className="sidebar-user">
-                      <span
-                        className="sidebar-user-dot"
-                        style={{ backgroundColor: user.color }}
-                      />
-                      <span className="sidebar-user-name">{user.name}</span>
-                      {user.cursor && (
-                        <span className="sidebar-user-line">
-                          Ln {user.cursor.lineNumber}
+                      <span className="sidebar-user-avatar">{user.avatar}</span>
+                      <div className="sidebar-user-info">
+                        <span className="sidebar-user-name" style={{ color: user.color }}>
+                          {user.name} {user.isYou && <span style={{ opacity: 0.5, fontSize: '0.7rem' }}>(You)</span>}
                         </span>
-                      )}
+                        {user.cursor && (
+                          <span className="sidebar-user-line">Ln {user.cursor.lineNumber}</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -239,7 +237,7 @@ export default function RoomPage() {
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>Your name:</span>
                     <br />
-                    <span style={{ color: userColor }}>{userName}</span>
+                    <span style={{ color: userColor }}>{userAvatar} {userName}</span>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-secondary)' }}>Sync:</span>

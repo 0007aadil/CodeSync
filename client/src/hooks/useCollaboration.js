@@ -48,6 +48,7 @@ export function useCollaboration(roomId) {
   const clientIdRef = useRef(null);
   const userNameRef = useRef(null);
   const userColorRef = useRef(null);
+  const userAvatarRef = useRef(null);
   const awarenessRef = useRef(new Map());
   const reconnectTimerRef = useRef(null);
   const reconnectAttempts = useRef(0);
@@ -78,6 +79,10 @@ export function useCollaboration(roomId) {
     userNameRef.current = storedName || randomName();
     try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-name', userNameRef.current); } catch (e) {}
     
+    let storedAvatar = null;
+    try { storedAvatar = typeof window !== 'undefined' ? sessionStorage.getItem('collab-user-avatar') : null; } catch (e) {}
+    userAvatarRef.current = storedAvatar || '🦊';
+    
     // Assign color based on hash of client ID
     const hash = clientIdRef.current.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     userColorRef.current = CURSOR_COLORS[hash % CURSOR_COLORS.length];
@@ -101,6 +106,7 @@ export function useCollaboration(roomId) {
     const state = {
       name: userNameRef.current,
       color: userColorRef.current,
+      avatar: userAvatarRef.current,
       cursor: cursor || null,
       selection: selection || null,
     };
@@ -230,6 +236,7 @@ export function useCollaboration(roomId) {
           clientId: id,
           name: s.name || 'Anonymous',
           color: s.color || '#888',
+          avatar: s.avatar || '🦊',
           cursor: s.cursor || null,
           selection: s.selection || null,
         }));
@@ -475,5 +482,6 @@ export function useCollaboration(roomId) {
     clientId: clientIdRef.current,
     userName: userNameRef.current,
     userColor: userColorRef.current,
+    userAvatar: userAvatarRef.current,
   };
 }
