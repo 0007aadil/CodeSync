@@ -15,6 +15,7 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState('');
   const [rooms, setRooms] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [tab, setTab] = useState('create'); // 'create' or 'join'
 
   useEffect(() => {
     try {
@@ -78,7 +79,7 @@ export default function Home() {
     <>
       <Head>
         <title>CodeSync — Real-time Collaborative Code Editor</title>
-        <meta name="description" content="Edit code together in real-time with live cursors, CRDT-powered sync, and Monaco editor. No signup required." />
+        <meta name="description" content="Edit code together in real-time with live cursors, CRDT-powered sync, and Monaco editor." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
       </Head>
@@ -86,6 +87,7 @@ export default function Home() {
       <div className="landing-page">
         <div className="landing-bg" />
 
+        {/* Nav */}
         <nav className="landing-nav">
           <div className="landing-nav-logo">
             <div className="landing-nav-logo-icon">⚡</div>
@@ -93,99 +95,136 @@ export default function Home() {
           </div>
           <div className="landing-nav-links">
             <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer" className="landing-nav-link">GitHub</a>
-            <a href="#features" className="landing-nav-link">Features</a>
           </div>
         </nav>
 
-        <div className="landing-content">
-          {/* Hero */}
-          <div className="hero">
+        {/* Main */}
+        <div className="landing-main">
+          {/* Left: Hero */}
+          <div className="landing-hero">
             <div className="hero-badge">
               <span className="hero-badge-dot" />
-              Real-time collaboration powered by CRDT
+              Real-time CRDT collaboration
             </div>
-            <h1>
-              Code together,{' '}
-              <span className="gradient-text">in real time</span>
-            </h1>
+            <h1>Code together,<br /><span className="gradient-text">in real time.</span></h1>
             <p className="hero-subtitle">
-              A collaborative code editor where multiple people can edit simultaneously.
-              See each other&apos;s cursors live, with conflict-free merging powered by Yjs CRDT.
+              Collaborative code editor with live cursors, conflict-free sync, and VS Code-grade editing. No signup.
             </p>
+
+            {/* Features inline */}
+            <div className="hero-features">
+              <div className="hero-feature">
+                <span className="hero-feature-icon">⚡</span>
+                <div>
+                  <div className="hero-feature-title">CRDT Sync</div>
+                  <div className="hero-feature-desc">Conflict-free editing</div>
+                </div>
+              </div>
+              <div className="hero-feature">
+                <span className="hero-feature-icon">👥</span>
+                <div>
+                  <div className="hero-feature-title">Live Cursors</div>
+                  <div className="hero-feature-desc">See others type live</div>
+                </div>
+              </div>
+              <div className="hero-feature">
+                <span className="hero-feature-icon">✦</span>
+                <div>
+                  <div className="hero-feature-title">Monaco Editor</div>
+                  <div className="hero-feature-desc">VS Code engine</div>
+                </div>
+              </div>
+              <div className="hero-feature">
+                <span className="hero-feature-icon">◆</span>
+                <div>
+                  <div className="hero-feature-title">Persistent</div>
+                  <div className="hero-feature-desc">PostgreSQL backed</div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Main Card — Identity + Create + Join */}
-          <div className="main-card">
-            {/* Identity Section */}
-            <div className="card-section">
-              <label className="input-label">Your Identity</label>
-              <div className="identity-row">
-                <div className="avatar-preview" title="Your avatar">
-                  {selectedAvatar}
-                </div>
-                <input
-                  id="user-name-input"
-                  type="text"
-                  className="input-field"
-                  placeholder="Your display name..."
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  maxLength={30}
-                />
-              </div>
-              <div className="avatar-picker">
-                {AVATARS.map((av) => (
-                  <button
-                    key={av}
-                    type="button"
-                    className={`avatar-option ${selectedAvatar === av ? 'selected' : ''}`}
-                    onClick={() => setSelectedAvatar(av)}
-                  >
-                    {av}
-                  </button>
-                ))}
-              </div>
+          {/* Right: Action Panel */}
+          <div className="landing-panel">
+            {/* Avatar + Name */}
+            <div className="panel-identity">
+              <div className="avatar-big">{selectedAvatar}</div>
+              <input
+                id="user-name-input"
+                type="text"
+                className="input-field panel-name-input"
+                placeholder="Your display name..."
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                maxLength={30}
+              />
             </div>
 
-            <div className="card-divider" />
-
-            {/* Create Room */}
-            <form className="card-section" onSubmit={handleCreateRoom}>
-              <label className="input-label">Create a New Room</label>
-              <div className="input-row">
-                <input
-                  id="room-name-input"
-                  type="text"
-                  className="input-field"
-                  placeholder="Room name (optional)"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
-                  maxLength={50}
-                />
-                <select
-                  id="language-select"
-                  className="select-field"
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
+            {/* Avatar Grid */}
+            <div className="avatar-picker">
+              {AVATARS.map((av) => (
+                <button
+                  key={av}
+                  type="button"
+                  className={`avatar-option ${selectedAvatar === av ? 'selected' : ''}`}
+                  onClick={() => setSelectedAvatar(av)}
                 >
-                  {LANGUAGES.map(lang => (
-                    <option key={lang.value} value={lang.value}>
-                      {lang.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button id="create-room-btn" type="submit" className="btn-primary" disabled={isCreating}>
-                {isCreating ? 'Creating...' : 'Create Room →'}
+                  {av}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Switcher */}
+            <div className="panel-tabs">
+              <button
+                className={`panel-tab ${tab === 'create' ? 'active' : ''}`}
+                onClick={() => setTab('create')}
+              >
+                Create Room
               </button>
-            </form>
+              <button
+                className={`panel-tab ${tab === 'join' ? 'active' : ''}`}
+                onClick={() => setTab('join')}
+              >
+                Join Room
+              </button>
+            </div>
 
-            <div className="card-divider" />
+            {/* Create Tab */}
+            {tab === 'create' && (
+              <form className="panel-form" onSubmit={handleCreateRoom}>
+                <div className="input-row">
+                  <input
+                    id="room-name-input"
+                    type="text"
+                    className="input-field"
+                    placeholder="Room name (optional)"
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    maxLength={50}
+                  />
+                  <select
+                    id="language-select"
+                    className="select-field"
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                  >
+                    {LANGUAGES.map(lang => (
+                      <option key={lang.value} value={lang.value}>
+                        {lang.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button id="create-room-btn" type="submit" className="btn-primary" disabled={isCreating}>
+                  {isCreating ? 'Creating...' : 'Create Room'}
+                </button>
+              </form>
+            )}
 
-            {/* Join Room */}
-            <form className="card-section" onSubmit={handleJoinRoom}>
-              <label className="input-label">Join Existing Room</label>
-              <div className="input-row">
+            {/* Join Tab */}
+            {tab === 'join' && (
+              <form className="panel-form" onSubmit={handleJoinRoom}>
                 <input
                   id="join-room-input"
                   type="text"
@@ -194,61 +233,36 @@ export default function Home() {
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
                 />
-                <button id="join-room-btn" type="submit" className="btn-secondary">
-                  Join →
+                <button id="join-room-btn" type="submit" className="btn-primary">
+                  Join Room
                 </button>
-              </div>
-            </form>
-          </div>
+              </form>
+            )}
 
-          {/* Active Rooms */}
-          {rooms.length > 0 && (
-            <div className="active-rooms">
-              <h3>● Active Rooms</h3>
-              <div className="room-list">
+            {/* Active Rooms */}
+            {rooms.length > 0 && (
+              <div className="panel-rooms">
+                <div className="panel-rooms-label">Active Rooms</div>
                 {rooms.map((room) => (
-                  <div key={room.id} className="room-item" onClick={() => router.push(`/room/${room.id}`)}>
+                  <div key={room.id} className="room-item" onClick={() => { saveIdentity(); router.push(`/room/${room.id}?avatar=${selectedAvatar}${userName.trim() ? '&uname=' + userName.trim() : ''}`); }}>
                     <div className="room-item-info">
                       <span className="room-item-name">{room.name || room.id}</span>
-                      <span className="room-item-lang">{room.language || 'javascript'}</span>
+                      <span className="room-item-lang">{room.language || 'js'}</span>
                     </div>
                     <div className="room-item-users">
                       <span className="room-item-dot" />
-                      {room.clients} {room.clients === 1 ? 'user' : 'users'}
+                      {room.clients}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Features */}
-          <div className="features" id="features">
-            <div className="feature-card">
-              <div className="feature-icon">⚡</div>
-              <div className="feature-title">Real-time Sync</div>
-              <div className="feature-desc">CRDT-powered conflict-free editing</div>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">👥</div>
-              <div className="feature-title">Live Cursors</div>
-              <div className="feature-desc">See others typing in real time</div>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">✦</div>
-              <div className="feature-title">Monaco Editor</div>
-              <div className="feature-desc">VS Code-grade syntax highlighting</div>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">◆</div>
-              <div className="feature-title">Persistent</div>
-              <div className="feature-desc">PostgreSQL + Redis backed</div>
-            </div>
+            )}
           </div>
         </div>
 
+        {/* Footer */}
         <footer className="landing-footer">
-          Built with <a href="https://yjs.dev" target="_blank" rel="noopener noreferrer">Yjs CRDT</a> · <a href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener noreferrer">Monaco Editor</a> · <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">Next.js</a> · <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer">View Source</a>
+          Built with <a href="https://yjs.dev" target="_blank" rel="noopener noreferrer">Yjs</a> · <a href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener noreferrer">Monaco</a> · <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">Next.js</a> · <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer">Source</a>
         </footer>
       </div>
     </>
