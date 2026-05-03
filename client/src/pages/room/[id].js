@@ -3,6 +3,8 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useCollaboration } from '@/hooks/useCollaboration';
 import CollabEditor from '@/components/CollabEditor';
+import AuthModal from '@/components/AuthModal';
+import SaveFileModal from '@/components/SaveFileModal';
 import { LANGUAGES } from '@/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -37,6 +39,12 @@ export default function RoomPage() {
   const terminalEndRef = useRef(null);
   const isDraggingRef = useRef(false);
 
+  // Auth state
+  const [authUser, setAuthUser] = useState(null);
+  const [authToken, setAuthToken] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
   const {
     bindEditor,
     connectionStatus,
@@ -52,6 +60,18 @@ export default function RoomPage() {
     if (lang) setLanguage(lang);
     if (name) setRoomName(decodeURIComponent(name));
   }, [lang, name]);
+
+  // Load auth state from localStorage
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('codesync-token');
+      const user = localStorage.getItem('codesync-user');
+      if (token && user) {
+        setAuthToken(token);
+        setAuthUser(JSON.parse(user));
+      }
+    } catch (e) {}
+  }, []);
 
   // Auto-scroll terminal
   useEffect(() => {
@@ -207,7 +227,8 @@ export default function RoomPage() {
     window.addEventListener('touchend', onUp);
   }, [terminalHeight]);
 
-  const handleSaveFile = useCallback(() => {
+  // Download file locally
+  const handleDownloadFile = useCallback(() => {
     const editor = editorInstanceRef.current;
     if (!editor) return;
     const content = editor.getValue();
@@ -222,8 +243,39 @@ export default function RoomPage() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast(`Saved as ${filename}`, 'success');
+    showToast(`Downloaded ${filename}`, 'success');
   }, [language, roomName, roomId, showToast]);
+
+  // Cloud save — opens auth modal if not logged in, or save modal if logged in
+  const handleCloudSave = useCallback(() => {
+    if (!authToken) {
+      setShowAuthModal(true);
+      return;
+    }
+    setShowSaveModal(true);
+  }, [authToken]);
+
+  const handleAuthSuccess = useCallback((user, token) => {
+    setAuthUser(user);
+    setAuthToken(token);
+    setShowAuthModal(false);
+    showToast(`Welcome, ${user.username}!`, 'success');
+    // After login, open save modal
+    setTimeout(() => setShowSaveModal(true), 300);
+  }, [showToast]);
+
+  const handleFileSaved = useCallback((file) => {
+    setShowSaveModal(false);
+    showToast(`Saved "${file.filename}" to cloud ☁`, 'success');
+  }, [showToast]);
+
+  const handleLogout = useCallback(() => {
+    setAuthUser(null);
+    setAuthToken(null);
+    localStorage.removeItem('codesync-token');
+    localStorage.removeItem('codesync-user');
+    showToast('Logged out', 'success');
+  }, [showToast]);
 
   const handleCopyRoomUrl = useCallback(async () => {
     const url = window.location.href;
@@ -371,11 +423,11 @@ export default function RoomPage() {
                 <span className="btn-label-desktop">Terminal</span>
               </button>
 
-              {/* Save File */}
+              {/* Download File */}
               <button
-                id="save-file-btn"
+                id="download-file-btn"
                 className="btn-copy-room"
-                onClick={handleSaveFile}
+                onClick={handleDownloadFile}
                 title="Download code as file"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -383,7 +435,21 @@ export default function RoomPage() {
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                <span className="btn-label-desktop">Save</span>
+              </button>
+
+              {/* Cloud Save */}
+              <button
+                id="cloud-save-btn"
+                className={`btn-cloud-save ${authUser ? 'logged-in' : ''}`}
+                onClick={handleCloudSave}
+                title={authUser ? 'Save to cloud' : 'Sign in to save online'}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                  <polyline points="17 21 17 13 7 13 7 21" />
+                  <polyline points="7 3 7 8 15 8" />
+                </svg>
+                <span className="btn-label-desktop">{authUser ? 'Save' : 'Sign in'}</span>
               </button>
 
               {/* Copy Room URL */}
@@ -531,6 +597,32 @@ export default function RoomPage() {
               </div>
             </div>
 
+            {/* Account section */}
+            <div className="sidebar-section">
+              <h4>Account</h4>
+              {authUser ? (
+                <div className="sidebar-account">
+                  <div className="sidebar-account-info">
+                    <span className="sidebar-account-avatar">{authUser.avatar || '🦊'}</span>
+                    <div className="sidebar-account-details">
+                      <span className="sidebar-account-name">{authUser.username}</span>
+                      <span className="sidebar-account-email">{authUser.email}</span>
+                    </div>
+                  </div>
+                  <button className="btn-logout" onClick={handleLogout}>Sign out</button>
+                </div>
+              ) : (
+                <button className="btn-signin" onClick={() => setShowAuthModal(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                  </svg>
+                  Sign in to save files
+                </button>
+              )}
+            </div>
+
             {/* Leave Room — at bottom */}
             <div className="sidebar-leave">
               <button className="btn-leave-room" onClick={handleLeaveRoom}>
@@ -545,6 +637,26 @@ export default function RoomPage() {
           </aside>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          onClose={() => setShowAuthModal(false)}
+          onAuth={handleAuthSuccess}
+        />
+      )}
+
+      {/* Save File Modal */}
+      {showSaveModal && (
+        <SaveFileModal
+          onClose={() => setShowSaveModal(false)}
+          language={language}
+          defaultName={`${(roomName || roomId || 'code').replace(/[^a-zA-Z0-9_-]/g, '_')}.${LANG_EXT[language] || 'txt'}`}
+          content={editorInstanceRef.current?.getValue() || ''}
+          token={authToken}
+          onSaved={handleFileSaved}
+        />
+      )}
 
       {/* Toast */}
       {toast && (

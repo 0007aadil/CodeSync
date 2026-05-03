@@ -8,8 +8,9 @@ import { execFile } from 'child_process';
 import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
-import { initPersistence, listDocuments, closePersistence } from './persistence.js';
+import { initPersistence, listDocuments, closePersistence, getPool } from './persistence.js';
 import { handleConnection, getRoomStats, cleanupRooms } from './yjs-server.js';
+import { registerAuthRoutes, registerFileRoutes } from './auth.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -169,6 +170,10 @@ wss.on('connection', (ws, req) => {
 async function start() {
   await initPersistence();
 
+  // Register auth & file routes (need pool from persistence)
+  const pool = getPool();
+  registerAuthRoutes(app, pool);
+  registerFileRoutes(app, pool);
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔══════════════════════════════════════════════╗
@@ -183,6 +188,11 @@ async function start() {
 ║   GET  /api/rooms                            ║
 ║   GET  /api/rooms/:id/stats                  ║
 ║   POST /api/run                              ║
+║   POST /api/auth/register                    ║
+║   POST /api/auth/login                       ║
+║   GET  /api/auth/me                          ║
+║   CRUD /api/files                            ║
+║   DB:   ${pool ? 'PostgreSQL' : 'In-Memory (dev)'}                      ║
 ╚══════════════════════════════════════════════╝
     `);
   });

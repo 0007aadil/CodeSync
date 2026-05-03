@@ -15,10 +15,13 @@ let redisAvailable = false;
 export async function initPersistence() {
   // Try PostgreSQL
   try {
+    const dbUrl = process.env.DATABASE_URL || '';
+    const useSSL = dbUrl.includes('sslmode=require') || dbUrl.includes('.neon.tech');
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: dbUrl,
       max: 10,
       idleTimeoutMillis: 30000,
+      ...(useSSL && { ssl: { rejectUnauthorized: false } }),
     });
     await pool.query('SELECT 1');
     dbAvailable = true;
@@ -171,4 +174,11 @@ export async function listDocuments() {
 export async function closePersistence() {
   if (pool) await pool.end();
   if (redis) redis.disconnect();
+}
+
+/**
+ * Get the database pool (for auth routes)
+ */
+export function getPool() {
+  return dbAvailable ? pool : null;
 }
