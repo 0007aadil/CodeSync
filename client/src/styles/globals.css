@@ -387,7 +387,7 @@ input,textarea { font-family:inherit; color:inherit; }
 
 /* Editor body layout */
 .editor-body { display:flex; flex:1; overflow:hidden; }
-.editor-main { flex:1; position:relative; min-width:0; }
+.editor-main { flex:1; position:relative; min-width:0; display:flex; flex-direction:column; }
 
 .connected-users { display:flex; align-items:center; gap:2px; }
 .user-avatar {
@@ -578,6 +578,132 @@ input,textarea { font-family:inherit; color:inherit; }
 .btn-copy-room.active {
   background:rgba(255,255,255,0.08);
   color:var(--text-primary);
+}
+
+/* Run button */
+.btn-run {
+  display:flex; align-items:center; gap:5px;
+  padding:0.35rem 0.75rem;
+  background:rgba(81,207,102,0.12);
+  border:1px solid rgba(81,207,102,0.25);
+  border-radius:6px; font-size:0.78rem; font-weight:600;
+  color:#51cf66; cursor:pointer;
+  transition:all var(--transition-fast);
+  white-space:nowrap;
+}
+.btn-run:hover:not(.disabled):not(.running) {
+  background:rgba(81,207,102,0.2);
+  border-color:rgba(81,207,102,0.4);
+  box-shadow:0 0 12px rgba(81,207,102,0.15);
+}
+.btn-run.running { opacity:0.7; cursor:wait; }
+.btn-run.disabled { opacity:0.35; cursor:not-allowed; }
+.run-spinner {
+  width:12px; height:12px;
+  border:2px solid rgba(81,207,102,0.3);
+  border-top-color:#51cf66;
+  border-radius:50%; animation:spin 0.6s linear infinite;
+}
+
+/* Editor pane (flex child) */
+.editor-pane { position:relative; overflow:hidden; }
+
+/* ===== TERMINAL PANEL ===== */
+.terminal-panel {
+  display:flex; flex-direction:column;
+  background:#080808;
+  border-top:1px solid var(--border-subtle);
+  min-height:100px; max-height:60vh;
+  position:relative;
+}
+
+/* Resize handle */
+.terminal-resize-handle {
+  position:absolute; top:-3px; left:0; right:0;
+  height:6px; cursor:row-resize; z-index:5;
+  background:transparent;
+  transition:background 150ms;
+}
+.terminal-resize-handle:hover,
+.terminal-resize-handle:active {
+  background:var(--accent-primary);
+}
+
+/* Terminal header */
+.terminal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.35rem 0.75rem;
+  background:rgba(15,15,15,0.95);
+  border-bottom:1px solid var(--border-subtle);
+  flex-shrink:0;
+}
+.terminal-header-left {
+  display:flex; align-items:center; gap:6px;
+  font-size:0.72rem; font-weight:600; color:var(--text-secondary);
+  text-transform:uppercase; letter-spacing:0.05em;
+}
+.terminal-header-right {
+  display:flex; align-items:center; gap:4px;
+}
+.terminal-running-badge {
+  font-size:0.6rem; font-weight:600; text-transform:uppercase;
+  padding:1px 6px; border-radius:4px;
+  background:rgba(81,207,102,0.12); color:#51cf66;
+  animation:pulse 1.5s ease infinite;
+}
+.terminal-action {
+  display:flex; align-items:center; gap:4px;
+  padding:3px 8px; border-radius:4px;
+  font-size:0.7rem; color:var(--text-muted);
+  transition:all var(--transition-fast);
+  cursor:pointer;
+}
+.terminal-action:hover {
+  background:rgba(255,255,255,0.06);
+  color:var(--text-primary);
+}
+
+/* Terminal body */
+.terminal-body {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  padding:0.5rem 0.75rem;
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:0.78rem; line-height:1.6;
+}
+
+/* Terminal lines */
+.terminal-line pre {
+  margin:0; white-space:pre-wrap; word-break:break-word;
+  font-family:inherit; font-size:inherit;
+}
+.terminal-stdout pre { color:#d4d4d4; }
+.terminal-stderr pre { color:#ff6b6b; }
+.terminal-command pre { color:#51cf66; font-weight:600; }
+.terminal-info pre { color:var(--text-muted); font-size:0.7rem; }
+.terminal-system pre { color:#ffb347; }
+
+.terminal-line + .terminal-line { margin-top:2px; }
+.terminal-command { margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.04); }
+.terminal-command:first-child { margin-top:0; padding-top:0; border-top:none; }
+
+/* Terminal empty state */
+.terminal-empty {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:0.5rem;
+  height:100%; color:var(--text-muted);
+  font-size:0.82rem; text-align:center;
+}
+.terminal-empty kbd {
+  display:inline-block;
+  padding:2px 6px; border-radius:4px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem; color:var(--text-secondary);
+}
+.terminal-supported {
+  font-size:0.7rem; color:var(--text-muted);
+  margin-top:0.25rem;
 }
 
 /* Mobile menu toggle — hidden on desktop */
