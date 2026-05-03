@@ -5,6 +5,13 @@ import { useCollaboration } from '@/hooks/useCollaboration';
 import CollabEditor from '@/components/CollabEditor';
 import { LANGUAGES } from '@/constants';
 
+const LANG_EXT = {
+  javascript: 'js', typescript: 'ts', python: 'py', java: 'java',
+  cpp: 'cpp', csharp: 'cs', go: 'go', rust: 'rs', ruby: 'rb',
+  php: 'php', swift: 'swift', kotlin: 'kt', html: 'html', css: 'css',
+  sql: 'sql', markdown: 'md', json: 'json', yaml: 'yaml',
+};
+
 export default function RoomPage() {
   const router = useRouter();
   const { id: roomId, lang, name, avatar: urlAvatar, uname } = router.query;
@@ -14,7 +21,9 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [toast, setToast] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const prevUsersRef = useRef(0);
+  const editorInstanceRef = useRef(null);
 
   const {
     bindEditor,
@@ -51,8 +60,27 @@ export default function RoomPage() {
   }, []);
 
   const handleEditorReady = useCallback((editor, monaco) => {
+    editorInstanceRef.current = editor;
     bindEditor(editor, monaco);
   }, [bindEditor]);
+
+  const handleSaveFile = useCallback(() => {
+    const editor = editorInstanceRef.current;
+    if (!editor) return;
+    const content = editor.getValue();
+    const ext = LANG_EXT[language] || 'txt';
+    const filename = `${(roomName || roomId || 'code').replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Saved as ${filename}`, 'success');
+  }, [language, roomName, roomId, showToast]);
 
   const handleCopyRoomUrl = useCallback(async () => {
     const url = window.location.href;
@@ -116,65 +144,97 @@ export default function RoomPage() {
           </div>
 
           <div className="editor-header-right">
-            {/* Connection Status */}
-            <div className="connection-status">
-              <span className={`connection-dot ${connectionStatus}`} />
-              <span>{connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}</span>
-            </div>
-
-            {/* Connected Users */}
-            <div className="connected-users">
-              {allUsers.slice(0, 5).map((user, idx) => (
-                <div
-                  key={user.clientId}
-                  className="user-avatar"
-                  style={{ backgroundColor: user.color, zIndex: allUsers.length - idx }}
-                  title={user.isYou ? `${user.name} (You)` : user.name}
-                >
-                  <span className="user-avatar-emoji">{user.avatar}</span>
-                  <span className="user-avatar-tooltip">{user.isYou ? `${user.name} (You)` : user.name}</span>
-                </div>
-              ))}
-              {allUsers.length > 5 && (
-                <span className="user-count-badge">+{allUsers.length - 5}</span>
-              )}
-            </div>
-
-            {/* Language Select */}
-            <select
-              id="language-select-header"
-              className="language-select"
-              value={language}
-              onChange={handleLanguageChange}
-            >
-              {LANGUAGES.map(lang => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-
-            {/* Copy Room URL */}
+            {/* Mobile menu toggle */}
             <button
-              id="copy-room-btn"
-              className={`btn-copy-room ${copied ? 'copied' : ''}`}
-              onClick={handleCopyRoomUrl}
+              className="btn-mobile-menu"
+              onClick={() => setMobileMenuOpen(p => !p)}
+              aria-label="Toggle menu"
             >
-              {copied ? '✓ Copied' : '🔗 Share'}
-            </button>
-
-            {/* Toggle Sidebar */}
-            <button
-              id="toggle-sidebar-btn"
-              className={`btn-copy-room ${sidebarOpen ? 'active' : ''}`}
-              onClick={() => setSidebarOpen(prev => !prev)}
-              title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <rect x="1" y="1" width="14" height="14" rx="2" />
-                <line x1="10" y1="1" x2="10" y2="15" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                {mobileMenuOpen ? (
+                  <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></>
+                ) : (
+                  <><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="20" y2="17" /></>
+                )}
               </svg>
             </button>
+
+            <div className={`header-controls ${mobileMenuOpen ? 'open' : ''}`}>
+              {/* Connection Status */}
+              <div className="connection-status">
+                <span className={`connection-dot ${connectionStatus}`} />
+                <span>{connectionStatus === 'connected' ? 'Live' : connectionStatus === 'connecting' ? 'Connecting...' : 'Offline'}</span>
+              </div>
+
+              {/* Connected Users */}
+              <div className="connected-users">
+                {allUsers.slice(0, 5).map((user, idx) => (
+                  <div
+                    key={user.clientId}
+                    className="user-avatar"
+                    style={{ backgroundColor: user.color, zIndex: allUsers.length - idx }}
+                    title={user.isYou ? `${user.name} (You)` : user.name}
+                  >
+                    <span className="user-avatar-emoji">{user.avatar}</span>
+                    <span className="user-avatar-tooltip">{user.isYou ? `${user.name} (You)` : user.name}</span>
+                  </div>
+                ))}
+                {allUsers.length > 5 && (
+                  <span className="user-count-badge">+{allUsers.length - 5}</span>
+                )}
+              </div>
+
+              {/* Language Select */}
+              <select
+                id="language-select-header"
+                className="language-select"
+                value={language}
+                onChange={handleLanguageChange}
+              >
+                {LANGUAGES.map(lang => (
+                  <option key={lang.value} value={lang.value}>
+                    {lang.label}
+                  </option>
+                ))}
+              </select>
+
+              {/* Save File */}
+              <button
+                id="save-file-btn"
+                className="btn-copy-room"
+                onClick={handleSaveFile}
+                title="Download code as file"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span className="btn-label-desktop">Save</span>
+              </button>
+
+              {/* Copy Room URL */}
+              <button
+                id="copy-room-btn"
+                className={`btn-copy-room ${copied ? 'copied' : ''}`}
+                onClick={handleCopyRoomUrl}
+              >
+                {copied ? '✓ Copied' : '🔗 Share'}
+              </button>
+
+              {/* Toggle Sidebar */}
+              <button
+                id="toggle-sidebar-btn"
+                className={`btn-copy-room btn-sidebar-toggle ${sidebarOpen ? 'active' : ''}`}
+                onClick={() => setSidebarOpen(prev => !prev)}
+                title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <rect x="1" y="1" width="14" height="14" rx="2" />
+                  <line x1="10" y1="1" x2="10" y2="15" />
+                </svg>
+              </button>
+            </div>
           </div>
         </header>
 
