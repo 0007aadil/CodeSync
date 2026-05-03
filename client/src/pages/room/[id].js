@@ -26,7 +26,7 @@ export default function RoomPage() {
   const [language, setLanguage] = useState('javascript');
   const [roomName, setRoomName] = useState('');
   const [copied, setCopied] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const prevUsersRef = useRef(0);
@@ -65,6 +65,13 @@ export default function RoomPage() {
     if (lang) setLanguage(lang);
     if (name) setRoomName(decodeURIComponent(name));
   }, [lang, name]);
+
+  // Open sidebar by default on desktop only
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth > 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
 
   // Load My Files when logged in and files panel opened
   useEffect(() => {
@@ -601,6 +608,10 @@ export default function RoomPage() {
 
           {/* Sidebar */}
           <aside className={`editor-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+            {/* Close button (mobile) */}
+            <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
             <div className="sidebar-section">
               <h4>Connected Users ({allUsers.length})</h4>
               <div className="sidebar-user-list">

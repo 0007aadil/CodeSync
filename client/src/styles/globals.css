@@ -487,6 +487,15 @@ input,textarea { font-family:inherit; color:inherit; }
 }
 /* Backdrop overlay — hidden on desktop, shown on mobile */
 .sidebar-backdrop { display:none; }
+/* Close button — hidden on desktop, shown on mobile */
+.sidebar-close-btn {
+  display:none; position:absolute; top:0.6rem; right:0.6rem;
+  width:28px; height:28px; border-radius:6px;
+  align-items:center; justify-content:center;
+  color:var(--text-muted); cursor:pointer; z-index:5;
+  transition:all var(--transition-fast);
+}
+.sidebar-close-btn:hover { background:rgba(255,255,255,0.08); color:var(--text-primary); }
 .sidebar-section h4 {
   font-size:0.65rem; text-transform:uppercase;
   letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.6rem;
@@ -1074,6 +1083,9 @@ input,textarea { font-family:inherit; color:inherit; }
     z-index:45;
     animation:fadeIn 0.2s ease;
   }
+
+  /* Show close button on sidebar */
+  .sidebar-close-btn { display:flex; }
 
   /* Show sidebar toggle in hamburger menu */
   .header-controls .btn-sidebar-toggle {
