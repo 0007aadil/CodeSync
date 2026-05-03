@@ -519,7 +519,7 @@ export default function RoomPage() {
               <button
                 id="toggle-sidebar-btn"
                 className={`btn-copy-room btn-sidebar-toggle ${sidebarOpen ? 'active' : ''}`}
-                onClick={() => setSidebarOpen(prev => !prev)}
+                onClick={() => { setSidebarOpen(prev => !prev); setMobileMenuOpen(false); }}
                 title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -595,6 +595,9 @@ export default function RoomPage() {
               </div>
             )}
           </div>
+
+          {/* Sidebar backdrop (mobile) */}
+          {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
           {/* Sidebar */}
           <aside className={`editor-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
