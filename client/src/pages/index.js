@@ -15,7 +15,8 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState('');
   const [rooms, setRooms] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
-  const [tab, setTab] = useState('create'); // 'create' or 'join'
+  const [tab, setTab] = useState('create');
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -122,7 +123,10 @@ export default function Home() {
           <div className="landing-panel">
             {/* Avatar + Name */}
             <div className="panel-identity">
-              <div className="avatar-big">{selectedAvatar}</div>
+              <div className="avatar-big" onClick={() => setAvatarPickerOpen(p => !p)} style={{ cursor: 'pointer' }}>{selectedAvatar}</div>
+              <button className="avatar-toggle-btn" onClick={() => setAvatarPickerOpen(p => !p)} title="Change avatar">
+                ⋯
+              </button>
               <input
                 id="user-name-input"
                 type="text"
@@ -134,19 +138,21 @@ export default function Home() {
               />
             </div>
 
-            {/* Avatar Grid */}
-            <div className="avatar-picker">
-              {AVATARS.map((av) => (
-                <button
-                  key={av}
-                  type="button"
-                  className={`avatar-option ${selectedAvatar === av ? 'selected' : ''}`}
-                  onClick={() => setSelectedAvatar(av)}
-                >
-                  {av}
-                </button>
-              ))}
-            </div>
+            {/* Avatar Grid — collapsible */}
+            {avatarPickerOpen && (
+              <div className="avatar-picker">
+                {AVATARS.map((av) => (
+                  <button
+                    key={av}
+                    type="button"
+                    className={`avatar-option ${selectedAvatar === av ? 'selected' : ''}`}
+                    onClick={() => { setSelectedAvatar(av); setAvatarPickerOpen(false); }}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Tab Switcher */}
             <div className="panel-tabs">
