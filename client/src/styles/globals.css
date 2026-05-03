@@ -765,6 +765,63 @@ input,textarea { font-family:inherit; color:inherit; }
 }
 .btn-signin:hover { background:rgba(99,149,255,0.15); border-color:rgba(99,149,255,0.3); }
 
+/* ===== MY FILES SIDEBAR ===== */
+.sidebar-files-header {
+  display:flex; align-items:center; justify-content:space-between;
+}
+.sidebar-files-header h4 {
+  display:flex; align-items:center; cursor:pointer;
+  user-select:none;
+}
+.sidebar-files-refresh {
+  display:flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:5px;
+  color:var(--text-muted); cursor:pointer;
+  transition:all var(--transition-fast);
+}
+.sidebar-files-refresh:hover { background:rgba(255,255,255,0.06); color:var(--text-primary); }
+.sidebar-files-list {
+  display:flex; flex-direction:column; gap:2px;
+  max-height:240px; overflow-y:auto;
+}
+.sidebar-files-empty {
+  padding:0.75rem 0.5rem; text-align:center;
+  font-size:0.75rem; color:var(--text-muted);
+}
+.sidebar-file-item {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.4rem 0.5rem; border-radius:6px;
+  transition:background var(--transition-fast);
+}
+.sidebar-file-item:hover { background:rgba(255,255,255,0.04); }
+.sidebar-file-info {
+  display:flex; align-items:center; gap:0.5rem;
+  flex:1; min-width:0; cursor:pointer;
+  color:var(--text-secondary);
+}
+.sidebar-file-info:hover { color:var(--text-primary); }
+.sidebar-file-info svg { flex-shrink:0; color:var(--text-muted); }
+.sidebar-file-meta {
+  display:flex; flex-direction:column; gap:1px; min-width:0;
+}
+.sidebar-file-name {
+  font-size:0.78rem; font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sidebar-file-lang {
+  font-size:0.62rem; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:0.04em;
+}
+.sidebar-file-delete {
+  display:flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:4px;
+  color:var(--text-muted); cursor:pointer;
+  opacity:0; transition:all var(--transition-fast);
+  flex-shrink:0;
+}
+.sidebar-file-item:hover .sidebar-file-delete { opacity:1; }
+.sidebar-file-delete:hover { background:rgba(255,99,99,0.12); color:#ff6b6b; }
+
 /* ===== AUTH MODAL ===== */
 .auth-overlay {
   position:fixed; inset:0; z-index:200;

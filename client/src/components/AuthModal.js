@@ -33,10 +33,7 @@ export default function AuthModal({ onClose, onAuth, initialTab = 'login' }) {
         return;
       }
 
-      // Store token
-      localStorage.setItem('codesync-token', data.token);
-      localStorage.setItem('codesync-user', JSON.stringify(data.user));
-
+      // Auth context handles localStorage persistence
       onAuth(data.user, data.token);
     } catch (err) {
       setError('Failed to connect to server');

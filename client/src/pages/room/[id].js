@@ -5,6 +5,7 @@ import { useCollaboration } from '@/hooks/useCollaboration';
 import CollabEditor from '@/components/CollabEditor';
 import AuthModal from '@/components/AuthModal';
 import SaveFileModal from '@/components/SaveFileModal';
+import { useAuth } from '@/context/AuthContext';
 import { LANGUAGES } from '@/constants';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
@@ -39,11 +40,15 @@ export default function RoomPage() {
   const terminalEndRef = useRef(null);
   const isDraggingRef = useRef(false);
 
-  // Auth state
-  const [authUser, setAuthUser] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
+  // Auth (from context — persists across pages)
+  const { user: authUser, token: authToken, login: authLogin, logout: authLogout, isLoggedIn } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+
+  // My Files state
+  const [myFiles, setMyFiles] = useState([]);
+  const [filesLoading, setFilesLoading] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
 
   const {
     bindEditor,
@@ -61,17 +66,10 @@ export default function RoomPage() {
     if (name) setRoomName(decodeURIComponent(name));
   }, [lang, name]);
 
-  // Load auth state from localStorage
+  // Load My Files when logged in and files panel opened
   useEffect(() => {
-    try {
-      const token = localStorage.getItem('codesync-token');
-      const user = localStorage.getItem('codesync-user');
-      if (token && user) {
-        setAuthToken(token);
-        setAuthUser(JSON.parse(user));
-      }
-    } catch (e) {}
-  }, []);
+    if (isLoggedIn && filesOpen) loadMyFiles();
+  }, [isLoggedIn, filesOpen]);
 
   // Auto-scroll terminal
   useEffect(() => {
@@ -248,34 +246,90 @@ export default function RoomPage() {
 
   // Cloud save — opens auth modal if not logged in, or save modal if logged in
   const handleCloudSave = useCallback(() => {
-    if (!authToken) {
+    if (!isLoggedIn) {
       setShowAuthModal(true);
       return;
     }
     setShowSaveModal(true);
-  }, [authToken]);
+  }, [isLoggedIn]);
 
   const handleAuthSuccess = useCallback((user, token) => {
-    setAuthUser(user);
-    setAuthToken(token);
+    authLogin(user, token);
     setShowAuthModal(false);
     showToast(`Welcome, ${user.username}!`, 'success');
     // After login, open save modal
     setTimeout(() => setShowSaveModal(true), 300);
-  }, [showToast]);
+  }, [showToast, authLogin]);
 
   const handleFileSaved = useCallback((file) => {
     setShowSaveModal(false);
     showToast(`Saved "${file.filename}" to cloud ☁`, 'success');
-  }, [showToast]);
+    // Refresh file list if open
+    if (filesOpen) loadMyFiles();
+  }, [showToast, filesOpen]);
 
   const handleLogout = useCallback(() => {
-    setAuthUser(null);
-    setAuthToken(null);
-    localStorage.removeItem('codesync-token');
-    localStorage.removeItem('codesync-user');
+    authLogout();
+    setMyFiles([]);
+    setFilesOpen(false);
     showToast('Logged out', 'success');
-  }, [showToast]);
+  }, [showToast, authLogout]);
+
+  // === My Files ===
+  const loadMyFiles = useCallback(async () => {
+    if (!authToken) return;
+    setFilesLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/files`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) setMyFiles(await res.json());
+    } catch (e) {} finally {
+      setFilesLoading(false);
+    }
+  }, [authToken]);
+
+  const handleOpenFile = useCallback(async (fileId) => {
+    if (!authToken || !editorInstanceRef.current) return;
+    try {
+      const res = await fetch(`${API_URL}/api/files/${fileId}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!res.ok) { showToast('Failed to load file', 'error'); return; }
+      const file = await res.json();
+      // Set editor content
+      const editor = editorInstanceRef.current;
+      const model = editor.getModel();
+      editor.executeEdits('load-file', [{
+        range: model.getFullModelRange(),
+        text: file.content,
+      }]);
+      // Update language if different
+      if (file.language && file.language !== language) {
+        setLanguage(file.language);
+        const url = new URL(window.location);
+        url.searchParams.set('lang', file.language);
+        window.history.replaceState({}, '', url);
+      }
+      showToast(`Opened "${file.filename}"`, 'success');
+    } catch (e) {
+      showToast('Failed to load file', 'error');
+    }
+  }, [authToken, language, showToast]);
+
+  const handleDeleteFile = useCallback(async (fileId, filename) => {
+    if (!authToken) return;
+    try {
+      const res = await fetch(`${API_URL}/api/files/${fileId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (res.ok) {
+        setMyFiles(prev => prev.filter(f => f.id !== fileId));
+        showToast(`Deleted "${filename}"`, 'success');
+      }
+    } catch (e) {}
+  }, [authToken, showToast]);
 
   const handleCopyRoomUrl = useCallback(async () => {
     const url = window.location.href;
@@ -440,16 +494,16 @@ export default function RoomPage() {
               {/* Cloud Save */}
               <button
                 id="cloud-save-btn"
-                className={`btn-cloud-save ${authUser ? 'logged-in' : ''}`}
+                className={`btn-cloud-save ${isLoggedIn ? 'logged-in' : ''}`}
                 onClick={handleCloudSave}
-                title={authUser ? 'Save to cloud' : 'Sign in to save online'}
+                title={isLoggedIn ? 'Save to cloud' : 'Sign in to save online'}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
                   <polyline points="17 21 17 13 7 13 7 21" />
                   <polyline points="7 3 7 8 15 8" />
                 </svg>
-                <span className="btn-label-desktop">{authUser ? 'Save' : 'Sign in'}</span>
+                <span className="btn-label-desktop">{isLoggedIn ? 'Save' : 'Sign in'}</span>
               </button>
 
               {/* Copy Room URL */}
@@ -600,13 +654,13 @@ export default function RoomPage() {
             {/* Account section */}
             <div className="sidebar-section">
               <h4>Account</h4>
-              {authUser ? (
+              {isLoggedIn ? (
                 <div className="sidebar-account">
                   <div className="sidebar-account-info">
-                    <span className="sidebar-account-avatar">{authUser.avatar || '🦊'}</span>
+                    <span className="sidebar-account-avatar">{authUser?.avatar || '🦊'}</span>
                     <div className="sidebar-account-details">
-                      <span className="sidebar-account-name">{authUser.username}</span>
-                      <span className="sidebar-account-email">{authUser.email}</span>
+                      <span className="sidebar-account-name">{authUser?.username}</span>
+                      <span className="sidebar-account-email">{authUser?.email}</span>
                     </div>
                   </div>
                   <button className="btn-logout" onClick={handleLogout}>Sign out</button>
@@ -622,6 +676,55 @@ export default function RoomPage() {
                 </button>
               )}
             </div>
+
+            {/* My Files section — only when logged in */}
+            {isLoggedIn && (
+              <div className="sidebar-section">
+                <div className="sidebar-files-header">
+                  <h4 onClick={() => setFilesOpen(p => !p)} style={{ cursor: 'pointer' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ transform: filesOpen ? 'rotate(90deg)' : 'rotate(0)', transition: 'transform 150ms', marginRight: '4px' }}>
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
+                    My Files ({myFiles.length})
+                  </h4>
+                  {filesOpen && (
+                    <button className="sidebar-files-refresh" onClick={loadMyFiles} title="Refresh">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={filesLoading ? { animation: 'spin 0.6s linear infinite' } : {}}>
+                        <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                {filesOpen && (
+                  <div className="sidebar-files-list">
+                    {filesLoading && myFiles.length === 0 ? (
+                      <div className="sidebar-files-empty">Loading...</div>
+                    ) : myFiles.length === 0 ? (
+                      <div className="sidebar-files-empty">No saved files yet</div>
+                    ) : (
+                      myFiles.map(f => (
+                        <div key={f.id} className="sidebar-file-item">
+                          <div className="sidebar-file-info" onClick={() => handleOpenFile(f.id)}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <div className="sidebar-file-meta">
+                              <span className="sidebar-file-name">{f.filename}</span>
+                              <span className="sidebar-file-lang">{f.language}</span>
+                            </div>
+                          </div>
+                          <button className="sidebar-file-delete" onClick={() => handleDeleteFile(f.id, f.filename)} title="Delete">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Leave Room — at bottom */}
             <div className="sidebar-leave">
