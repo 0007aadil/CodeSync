@@ -1,10 +1,12 @@
 services:
   - type: web
     name: codesync-server
-    env: docker
+    runtime: node
     region: oregon
     plan: free
     rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js
     envVars:
       - key: PORT
         value: 10000

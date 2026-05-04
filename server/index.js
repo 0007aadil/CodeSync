@@ -91,83 +91,74 @@ app.get('/api/rooms/:id/stats', (req, res) => {
 });
 
 // === Code Execution ===
-const RUNNERS = {
-  javascript: { ext: '.js', buildCmd: (file) => `node ${file}` },
-  typescript: { ext: '.ts', buildCmd: (file) => `npx tsx ${file}` },
-  python:     { ext: '.py', buildCmd: (file) => `python3 ${file}` },
-  java:       { ext: '.java', buildCmd: (file) => `java ${file}` },
-  cpp:        { ext: '.cpp', buildCmd: (file) => `g++ ${file} -o ${file}.out && ${file}.out` },
-  csharp:     { ext: '.cs', buildCmd: (file) => `csc ${file} && mono ${file.replace('.cs', '.exe')}` },
-  go:         { ext: '.go', buildCmd: (file) => `GO111MODULE=off go run ${file}` },
-  ruby:       { ext: '.rb', buildCmd: (file) => `ruby ${file}` },
-  swift:      { ext: '.swift', buildCmd: (file) => `swift ${file}` },
+const JUDGE0_LANG_MAP = {
+  javascript: 93,
+  typescript: 94,
+  python: 92,
+  java: 91,
+  cpp: 54,
+  csharp: 51,
+  go: 95,
+  ruby: 72,
+  swift: 83
 };
 
-const RUN_TIMEOUT = 10000; // 10 seconds max
-const RUN_SANDBOX = join(tmpdir(), 'codesync-sandbox');
-try { mkdirSync(RUN_SANDBOX, { recursive: true }); } catch (e) {}
-
-app.post('/api/run', (req, res) => {
+app.post('/api/run', async (req, res) => {
   const { code, language } = req.body;
   if (!code || !language) {
     return res.status(400).json({ error: 'Missing code or language' });
   }
 
-  const runner = RUNNERS[language];
-  if (!runner) {
+  const langId = JUDGE0_LANG_MAP[language];
+  if (!langId) {
     return res.status(400).json({
-      error: `Language "${language}" is not supported for execution. Supported: ${Object.keys(RUNNERS).join(', ')}`,
+      error: `Language "${language}" is not supported for execution. Supported: ${Object.keys(JUDGE0_LANG_MAP).join(', ')}`,
     });
   }
 
-  const runId = nanoid(8);
-  const runDir = join(RUN_SANDBOX, runId);
-  try { mkdirSync(runDir, { recursive: true }); } catch (e) {}
-
-  let fileName = `main${runner.ext}`;
-  if (language === 'java') {
-    const classMatch = code.match(/public\s+class\s+([a-zA-Z0-9_]+)/);
-    fileName = classMatch ? `${classMatch[1]}.java` : 'Main.java';
-  }
-
-  const filePath = join(runDir, fileName);
-  const startTime = Date.now();
-
   try {
-    writeFileSync(filePath, code, 'utf-8');
-  } catch (err) {
-    return res.status(500).json({ error: 'Failed to write temporary file' });
-  }
+    const startTime = Date.now();
+    const response = await fetch('https://ce.judge0.com/submissions?base64_encoded=false&wait=true', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        source_code: code,
+        language_id: langId
+      })
+    });
 
-  const command = runner.buildCmd(filePath);
+    if (!response.ok) {
+      throw new Error(`Judge0 API returned ${response.status}`);
+    }
 
-  exec(command, {
-    timeout: RUN_TIMEOUT,
-    maxBuffer: 1024 * 512, // 512KB output max
-    cwd: runDir, // Execute from within the unique directory
-    env: { ...process.env, NODE_NO_WARNINGS: '1' },
-  }, (error, stdout, stderr) => {
-    // Cleanup temporary execution directory completely
-    try { rmSync(runDir, { recursive: true, force: true }); } catch (e) {}
-
+    const data = await response.json();
     const duration = Date.now() - startTime;
 
-    if (error && error.killed) {
-      return res.json({
-        stdout: stdout || '',
-        stderr: `Execution timed out after ${RUN_TIMEOUT / 1000}s`,
-        exitCode: 1,
-        duration,
-      });
+    // Judge0 status IDs: 3 = Accepted, >3 = Error (Compile, Runtime, Time Limit, etc)
+    const isError = data.status && data.status.id !== 3;
+
+    let stderr = data.stderr || '';
+    if (data.compile_output) {
+      stderr += (stderr ? '\n' : '') + data.compile_output;
     }
 
     res.json({
-      stdout: stdout || '',
-      stderr: stderr || (error ? error.message : ''),
-      exitCode: error ? error.code || 1 : 0,
-      duration,
+      stdout: data.stdout || '',
+      stderr: stderr,
+      exitCode: isError ? 1 : 0,
+      duration: Math.round(parseFloat(data.time || 0) * 1000) || duration,
     });
-  });
+  } catch (err) {
+    res.json({
+      stdout: '',
+      stderr: `Execution engine error: ${err.message}`,
+      exitCode: 1,
+      duration: 0,
+    });
+  }
 });
 
 // === HTTP Server ===
