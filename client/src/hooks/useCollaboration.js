@@ -42,6 +42,7 @@ export function useCollaboration(roomId, overrides = {}, authUser = null) {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [isReady, setIsReady] = useState(false);
+  const [localName, setLocalName] = useState(null);
   
   const ydocRef = useRef(null);
   const wsRef = useRef(null);
@@ -95,17 +96,17 @@ export function useCollaboration(roomId, overrides = {}, authUser = null) {
 
   // Synchronize username with logged-in user dynamically
   useEffect(() => {
-    if (authUser && authUser.username) {
-      if (userNameRef.current !== authUser.username) {
-        userNameRef.current = authUser.username;
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-          sendAwareness();
-        }
-        // Force a re-render so the local user's name updates in the sidebar
-        setRemoteUsers(prev => [...prev]);
+    const targetName = authUser?.username || userNameRef.current;
+    if (userNameRef.current !== targetName) {
+      userNameRef.current = targetName;
+      try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-name', targetName); } catch (e) {}
+      
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        sendAwareness();
       }
     }
-  }, [authUser, sendAwareness]);
+    setLocalName(targetName);
+  }, [authUser?.username, sendAwareness]);
 
   /**
    * Send a raw binary message, queue if disconnected
@@ -545,7 +546,7 @@ export function useCollaboration(roomId, overrides = {}, authUser = null) {
     remoteUsers,
     isReady,
     clientId: clientIdRef.current,
-    userName: userNameRef.current,
+    userName: localName || userNameRef.current,
     userColor: userColorRef.current,
     userAvatar: userAvatarRef.current,
   };
