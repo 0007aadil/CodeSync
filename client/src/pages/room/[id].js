@@ -5,6 +5,7 @@ import { useCollaboration } from '@/hooks/useCollaboration';
 import CollabEditor from '@/components/CollabEditor';
 import AuthModal from '@/components/AuthModal';
 import SaveFileModal from '@/components/SaveFileModal';
+import RoomChat from '@/components/RoomChat';
 import { useAuth } from '@/context/AuthContext';
 import { LANGUAGES } from '@/constants';
 
@@ -12,12 +13,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 const LANG_EXT = {
   javascript: 'js', typescript: 'ts', python: 'py', java: 'java',
-  cpp: 'cpp', csharp: 'cs', go: 'go', rust: 'rs', ruby: 'rb',
-  php: 'php', swift: 'swift', kotlin: 'kt', html: 'html', css: 'css',
-  sql: 'sql', markdown: 'md', json: 'json', yaml: 'yaml',
+  cpp: 'cpp', csharp: 'cs', go: 'go', ruby: 'rb', swift: 'swift',
 };
 
-const RUNNABLE = ['javascript', 'typescript', 'python'];
+const RUNNABLE = LANGUAGES.map(l => l.value);
 
 export default function RoomPage() {
   const router = useRouter();
@@ -49,6 +48,9 @@ export default function RoomPage() {
   const [myFiles, setMyFiles] = useState([]);
   const [filesLoading, setFilesLoading] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
+
+  // Chat state
+  const [chatOpen, setChatOpen] = useState(false);
 
   const {
     bindEditor,
@@ -134,7 +136,7 @@ export default function RoomPage() {
       setTerminalOpen(true);
       setTerminalOutput(prev => [...prev, {
         type: 'system',
-        text: `⚠ Language "${language}" is not supported for execution.\nSupported: JavaScript, TypeScript, Python`,
+        text: `⚠ Language "${language}" is not supported for execution.\nSupported: All available languages`,
         time: new Date(),
       }]);
       return;
@@ -522,6 +524,26 @@ export default function RoomPage() {
                 {copied ? '✓ Copied' : '🔗 Share'}
               </button>
 
+              {/* Chat Toggle */}
+              <button
+                id="chat-toggle-btn"
+                className={`btn-copy-room btn-chat-toggle ${chatOpen ? 'active' : ''}`}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setShowAuthModal(true);
+                    showToast('Sign in to use chat', 'error');
+                    return;
+                  }
+                  setChatOpen(p => !p);
+                }}
+                title={isLoggedIn ? 'Toggle chat' : 'Sign in to chat'}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <span className="btn-label-desktop">Chat</span>
+              </button>
+
               {/* Toggle Sidebar */}
               <button
                 id="toggle-sidebar-btn"
@@ -588,7 +610,7 @@ export default function RoomPage() {
                   {terminalOutput.length === 0 ? (
                     <div className="terminal-empty">
                       <span>Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or click <strong>▶ Run</strong> to execute your code</span>
-                      <span className="terminal-supported">Supported: JavaScript · TypeScript · Python</span>
+                      <span className="terminal-supported">Supported: All available languages</span>
                     </div>
                   ) : (
                     terminalOutput.map((entry, i) => (
@@ -602,6 +624,17 @@ export default function RoomPage() {
               </div>
             )}
           </div>
+
+          {/* Chat Panel (between editor and sidebar) */}
+          {chatOpen && isLoggedIn && (
+            <RoomChat
+              roomId={roomId}
+              token={authToken}
+              user={authUser}
+              isOpen={chatOpen}
+              onClose={() => setChatOpen(false)}
+            />
+          )}
 
           {/* Sidebar backdrop (mobile) */}
           {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
