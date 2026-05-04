@@ -4,13 +4,14 @@ import http from 'http';
 import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import { nanoid } from 'nanoid';
-import { execFile } from 'child_process';
+import { exec } from 'child_process';
 import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { initPersistence, listDocuments, closePersistence, getPool } from './persistence.js';
 import { handleConnection, getRoomStats, cleanupRooms } from './yjs-server.js';
 import { registerAuthRoutes, registerFileRoutes } from './auth.js';
+import { handleChatConnection } from './chat.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -86,9 +87,15 @@ app.get('/api/rooms/:id/stats', (req, res) => {
 
 // === Code Execution ===
 const RUNNERS = {
-  javascript: { cmd: 'node', ext: '.js' },
-  typescript: { cmd: 'node', ext: '.js' }, // simplified — runs as JS
-  python:     { cmd: 'python3', ext: '.py' },
+  javascript: { ext: '.js', buildCmd: (file) => `node ${file}` },
+  typescript: { ext: '.ts', buildCmd: (file) => `npx tsx ${file}` },
+  python:     { ext: '.py', buildCmd: (file) => `python3 ${file}` },
+  java:       { ext: '.java', buildCmd: (file) => `java ${file}` },
+  cpp:        { ext: '.cpp', buildCmd: (file) => `g++ ${file} -o ${file}.out && ${file}.out` },
+  csharp:     { ext: '.cs', buildCmd: (file) => `csc ${file} && mono ${file.replace('.cs', '.exe')}` },
+  go:         { ext: '.go', buildCmd: (file) => `GO111MODULE=off go run ${file}` },
+  ruby:       { ext: '.rb', buildCmd: (file) => `ruby ${file}` },
+  swift:      { ext: '.swift', buildCmd: (file) => `swift ${file}` },
 };
 
 const RUN_TIMEOUT = 10000; // 10 seconds max
@@ -118,13 +125,17 @@ app.post('/api/run', (req, res) => {
     return res.status(500).json({ error: 'Failed to write temporary file' });
   }
 
-  execFile(runner.cmd, [filePath], {
+  const command = runner.buildCmd(filePath);
+
+  exec(command, {
     timeout: RUN_TIMEOUT,
     maxBuffer: 1024 * 512, // 512KB output max
     env: { ...process.env, NODE_NO_WARNINGS: '1' },
   }, (error, stdout, stderr) => {
     // Cleanup temp file
     try { unlinkSync(filePath); } catch (e) {}
+    try { unlinkSync(`${filePath}.out`); } catch (e) {}
+    try { unlinkSync(filePath.replace('.cs', '.exe')); } catch (e) {}
 
     const duration = Date.now() - startTime;
 
@@ -149,7 +160,7 @@ app.post('/api/run', (req, res) => {
 // === HTTP Server ===
 const server = http.createServer(app);
 
-// === WebSocket Server ===
+// === WebSocket Server (Yjs sync) ===
 const wss = new WebSocketServer({ server, path: '/ws' });
 
 wss.on('connection', (ws, req) => {
@@ -164,6 +175,26 @@ wss.on('connection', (ws, req) => {
   }
 
   handleConnection(ws, roomId, clientId);
+});
+
+// === WebSocket Server (Chat + WebRTC signaling) ===
+const chatWss = new WebSocketServer({ server, path: '/chat' });
+
+chatWss.on('connection', (ws, req) => {
+  const url = new URL(req.url, `http://localhost:${PORT}`);
+  const roomId = url.searchParams.get('room');
+  const token = url.searchParams.get('token');
+
+  if (!roomId) {
+    ws.close(4001, 'Missing room parameter');
+    return;
+  }
+  if (!token) {
+    ws.close(4003, 'Authentication required');
+    return;
+  }
+
+  handleChatConnection(ws, roomId, token);
 });
 
 // === Startup ===
