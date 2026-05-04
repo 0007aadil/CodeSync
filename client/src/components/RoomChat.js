@@ -438,7 +438,7 @@ export default function RoomChat({ roomId, token, user, avatar, isOpen, onClose 
           {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
             <audio
               key={userId}
-              ref={(el) => { if (el) el.srcObject = stream; }}
+              ref={(el) => { if (el && el.srcObject !== stream) el.srcObject = stream; }}
               autoPlay
             />
           ))}
@@ -451,7 +451,7 @@ export default function RoomChat({ roomId, token, user, avatar, isOpen, onClose 
           {/* Local video */}
           <div className="video-tile">
             <video
-              ref={(el) => { if (el && localStream) el.srcObject = localStream; }}
+              ref={(el) => { if (el && localStream && el.srcObject !== localStream) el.srcObject = localStream; }}
               autoPlay
               playsInline
               muted
@@ -465,7 +465,7 @@ export default function RoomChat({ roomId, token, user, avatar, isOpen, onClose 
             return (
               <div key={userId} className="video-tile">
                 <video
-                  ref={(el) => { if (el) el.srcObject = stream; }}
+                  ref={(el) => { if (el && el.srcObject !== stream) el.srcObject = stream; }}
                   autoPlay
                   playsInline
                   muted
