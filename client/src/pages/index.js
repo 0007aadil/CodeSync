@@ -81,7 +81,11 @@ export default function Home() {
     <>
       <Head>
         <title>CodeSync — Real-time Collaborative Code Editor</title>
-        <meta name="description" content="Edit code together in real-time with live cursors, CRDT-powered sync, and Monaco editor." />
+        <meta name="description" content="A full-stack collaborative IDE featuring real-time CRDT sync, live terminal execution, WebRTC video chat, and cloud saves." />
+        <meta name="keywords" content="collaborative code editor, real-time IDE, online code editor, pair programming, WebRTC video chat, live code execution, Yjs, CRDT, monaco editor, CodeSync" />
+        <meta property="og:title" content="CodeSync — Collaborative Code Editor" />
+        <meta property="og:description" content="Code together in real-time. A modern collaborative IDE featuring live cursors, an interactive terminal, and WebRTC video calling." />
+        <meta property="og:type" content="website" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
       </Head>
