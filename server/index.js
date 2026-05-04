@@ -223,13 +223,14 @@ async function start() {
   const pool = getPool();
   registerAuthRoutes(app, pool);
   registerFileRoutes(app, pool);
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log(`
+  function tryListen(port, maxRetries = 3) {
+    server.listen(port, '0.0.0.0', () => {
+      console.log(`
 ╔══════════════════════════════════════════════╗
 ║   🚀 Collaborative Editor Server            ║
 ║                                              ║
-║   HTTP:  http://localhost:${PORT}              ║
-║   WS:    ws://localhost:${PORT}/ws              ║
+║   HTTP:  http://localhost:${port}              ║
+║   WS:    ws://localhost:${port}/ws              ║
 ║                                              ║
 ║   API Endpoints:                             ║
 ║   GET  /api/health                           ║
@@ -244,7 +245,21 @@ async function start() {
 ║   DB:   ${pool ? 'PostgreSQL' : 'In-Memory (dev)'}                      ║
 ╚══════════════════════════════════════════════╝
     `);
-  });
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE' && maxRetries > 0) {
+        console.log(`⚠️  Port ${port} is busy, trying ${port + 1}...`);
+        server.close();
+        tryListen(port + 1, maxRetries - 1);
+      } else {
+        console.error('❌ Server error:', err.message);
+        process.exit(1);
+      }
+    });
+  }
+
+  tryListen(Number(PORT));
 }
 
 // Graceful shutdown
