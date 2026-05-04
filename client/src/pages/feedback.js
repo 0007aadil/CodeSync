@@ -11,12 +11,18 @@ export default function Feedback() {
     e.preventDefault();
     if (!feedback.trim()) return;
     
-    // Here we would typically send this to an API endpoint
-    // For now, we simulate a successful submission
-    setTimeout(() => {
-      setSubmitted(true);
-      setFeedback('');
-    }, 500);
+    // Construct mailto link to send feedback directly to the requested email
+    const targetEmail = "aadilahsan007@gmail.com";
+    const subject = encodeURIComponent("CodeSync Feedback");
+    const body = encodeURIComponent(`User Email: ${email || 'Not provided'}\n\nFeedback:\n${feedback}`);
+    
+    // Open default email client
+    window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+
+    // Show success state
+    setSubmitted(true);
+    setFeedback('');
+    setEmail('');
   };
 
   return (
