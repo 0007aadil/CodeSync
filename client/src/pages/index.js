@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import { nanoid } from 'nanoid';
 import { LANGUAGES, AVATARS } from '@/constants';
 
@@ -99,6 +100,8 @@ export default function Home() {
             <span>CodeSync</span>
           </div>
           <div className="landing-nav-links">
+            <Link href="/about" className="landing-nav-link">About</Link>
+            <Link href="/feedback" className="landing-nav-link">Feedback</Link>
             <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer" className="landing-nav-link">GitHub</a>
           </div>
         </nav>
