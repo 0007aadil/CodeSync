@@ -12,7 +12,7 @@ const ICE_SERVERS = [
 /**
  * RoomChat — text chat + voice/video calling (requires auth)
  */
-export default function RoomChat({ roomId, token, user, isOpen, onClose }) {
+export default function RoomChat({ roomId, token, user, avatar, isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
@@ -41,7 +41,7 @@ export default function RoomChat({ roomId, token, user, isOpen, onClose }) {
   useEffect(() => {
     if (!isOpen || !token || !roomId) return;
 
-    const wsUrl = `${WS_URL}/chat?room=${roomId}&token=${encodeURIComponent(token)}`;
+    const wsUrl = `${WS_URL}/chat?room=${roomId}&token=${encodeURIComponent(token)}${avatar ? `&avatar=${encodeURIComponent(avatar)}` : ''}`;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 

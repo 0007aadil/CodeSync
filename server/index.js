@@ -203,6 +203,7 @@ chatWss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const roomId = url.searchParams.get('room');
   const token = url.searchParams.get('token');
+  const avatar = url.searchParams.get('avatar');
 
   if (!roomId) {
     ws.close(4001, 'Missing room parameter');
@@ -213,7 +214,7 @@ chatWss.on('connection', (ws, req) => {
     return;
   }
 
-  handleChatConnection(ws, roomId, token);
+  handleChatConnection(ws, roomId, token, avatar);
 });
 
 // === Startup ===

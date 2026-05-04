@@ -38,7 +38,7 @@ function generateClientId() {
  * Custom hook: useCollaboration
  * Manages Yjs document, WebSocket connection, and awareness (cursors)
  */
-export function useCollaboration(roomId, overrides = {}) {
+export function useCollaboration(roomId, overrides = {}, authUser = null) {
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [isReady, setIsReady] = useState(false);
@@ -92,6 +92,20 @@ export function useCollaboration(roomId, overrides = {}) {
     const hash = clientIdRef.current.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
     userColorRef.current = CURSOR_COLORS[hash % CURSOR_COLORS.length];
   }
+
+  // Synchronize username with logged-in user dynamically
+  useEffect(() => {
+    if (authUser && authUser.username) {
+      if (userNameRef.current !== authUser.username) {
+        userNameRef.current = authUser.username;
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          sendAwareness();
+        }
+        // Force a re-render so the local user's name updates in the sidebar
+        setRemoteUsers(prev => [...prev]);
+      }
+    }
+  }, [authUser, sendAwareness]);
 
   /**
    * Send a raw binary message, queue if disconnected

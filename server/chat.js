@@ -29,12 +29,16 @@ function verifyToken(token) {
 /**
  * Handle a chat WebSocket connection
  */
-export function handleChatConnection(ws, roomId, token) {
+export function handleChatConnection(ws, roomId, token, customAvatar) {
   const user = verifyToken(token);
   if (!user) {
     ws.close(4003, 'Authentication required for chat');
     return;
   }
+
+  ws._chatUser = user;
+  ws._chatRoom = roomId;
+  ws._chatAvatar = customAvatar || user.avatar || '🦊';
 
   // Add to room
   if (!chatRooms.has(roomId)) {
@@ -42,9 +46,6 @@ export function handleChatConnection(ws, roomId, token) {
   }
   const room = chatRooms.get(roomId);
   room.add(ws);
-
-  ws._chatRoom = roomId;
-  ws._chatUser = user;
 
   console.log(`💬 ${user.username} joined chat in room ${roomId}`);
 
@@ -62,7 +63,7 @@ export function handleChatConnection(ws, roomId, token) {
       participants.push({
         id: client._chatUser.id,
         username: client._chatUser.username,
-        avatar: client._chatUser.avatar || '🦊',
+        avatar: client._chatAvatar || '🦊',
       });
     }
   }
@@ -114,7 +115,7 @@ function handleChatMessage(ws, room, user, msg) {
         type: 'chat',
         userId: user.id,
         username: user.username,
-        avatar: user.avatar || '🦊',
+        avatar: ws._chatAvatar,
         text: (msg.text || '').slice(0, 2000), // Limit length
         timestamp: Date.now(),
       };

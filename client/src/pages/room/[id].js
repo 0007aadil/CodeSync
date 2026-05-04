@@ -61,7 +61,7 @@ export default function RoomPage() {
     userName,
     userColor,
     userAvatar,
-  } = useCollaboration(roomId, { name: uname || undefined, avatar: urlAvatar || undefined });
+  } = useCollaboration(roomId, { name: uname || undefined, avatar: urlAvatar || undefined }, authUser);
 
   useEffect(() => {
     if (lang) setLanguage(lang);
@@ -631,6 +631,7 @@ export default function RoomPage() {
               roomId={roomId}
               token={authToken}
               user={authUser}
+              avatar={userAvatar}
               isOpen={chatOpen}
               onClose={() => setChatOpen(false)}
             />
