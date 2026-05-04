@@ -432,6 +432,19 @@ export default function RoomChat({ roomId, token, user, isOpen, onClose }) {
         </div>
       )}
 
+      {/* Hidden Audio for All Calls */}
+      {isInCall && (
+        <div style={{ display: 'none' }}>
+          {Array.from(remoteStreams.entries()).map(([userId, stream]) => (
+            <audio
+              key={userId}
+              ref={(el) => { if (el) el.srcObject = stream; }}
+              autoPlay
+            />
+          ))}
+        </div>
+      )}
+
       {/* Video Streams */}
       {isInCall && activeCall?.type === 'video' && (
         <div className="chat-video-grid">
@@ -455,6 +468,7 @@ export default function RoomChat({ roomId, token, user, isOpen, onClose }) {
                   ref={(el) => { if (el) el.srcObject = stream; }}
                   autoPlay
                   playsInline
+                  muted
                   className="video-stream"
                 />
                 <span className="video-label">{p?.username || 'User'}</span>
@@ -483,7 +497,11 @@ export default function RoomChat({ roomId, token, user, isOpen, onClose }) {
             ) : (
               <div key={i} className={`chat-msg ${msg.userId === user?.id ? 'chat-msg-own' : ''}`}>
                 <div className="chat-msg-header">
-                  <span className="chat-msg-avatar">{msg.avatar || '🦊'}</span>
+                  <span className="chat-msg-avatar">
+                    {msg.userId === user?.id 
+                      ? (user?.avatar || '🦊') 
+                      : (participants.find(p => p.id === msg.userId)?.avatar || msg.avatar || '🦊')}
+                  </span>
                   <span className="chat-msg-name">{msg.userId === user?.id ? 'You' : msg.username}</span>
                   <span className="chat-msg-time">{formatTime(msg.timestamp)}</span>
                 </div>
