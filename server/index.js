@@ -5,7 +5,7 @@ import { WebSocketServer } from 'ws';
 import cors from 'cors';
 import { nanoid } from 'nanoid';
 import { exec } from 'child_process';
-import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
+import { writeFileSync, unlinkSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { initPersistence, listDocuments, closePersistence, getPool } from './persistence.js';
@@ -120,8 +120,17 @@ app.post('/api/run', (req, res) => {
     });
   }
 
-  const fileId = nanoid(8);
-  const filePath = join(RUN_SANDBOX, `${fileId}${runner.ext}`);
+  const runId = nanoid(8);
+  const runDir = join(RUN_SANDBOX, runId);
+  try { mkdirSync(runDir, { recursive: true }); } catch (e) {}
+
+  let fileName = `main${runner.ext}`;
+  if (language === 'java') {
+    const classMatch = code.match(/public\s+class\s+([a-zA-Z0-9_]+)/);
+    fileName = classMatch ? `${classMatch[1]}.java` : 'Main.java';
+  }
+
+  const filePath = join(runDir, fileName);
   const startTime = Date.now();
 
   try {
@@ -135,12 +144,11 @@ app.post('/api/run', (req, res) => {
   exec(command, {
     timeout: RUN_TIMEOUT,
     maxBuffer: 1024 * 512, // 512KB output max
+    cwd: runDir, // Execute from within the unique directory
     env: { ...process.env, NODE_NO_WARNINGS: '1' },
   }, (error, stdout, stderr) => {
-    // Cleanup temp file
-    try { unlinkSync(filePath); } catch (e) {}
-    try { unlinkSync(`${filePath}.out`); } catch (e) {}
-    try { unlinkSync(filePath.replace('.cs', '.exe')); } catch (e) {}
+    // Cleanup temporary execution directory completely
+    try { rmSync(runDir, { recursive: true, force: true }); } catch (e) {}
 
     const duration = Date.now() - startTime;
 
