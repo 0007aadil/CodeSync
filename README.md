@@ -1,4 +1,4 @@
-# ⚡ CodeSync — Real-time Collaborative Code Editor
+# CodeSync — Real-time Collaborative Code Editor
 
 A fully-featured collaborative code editing environment. Work together in real-time with live cursors, integrated voice/video calling, real-time chat, and an interactive code execution terminal.
 
@@ -29,13 +29,13 @@ A fully-featured collaborative code editing environment. Work together in real-t
 
 ## Core Features
 
-- **⚡ Conflict-Free Real-time Sync:** Powered by Yjs (CRDT) for sub-millisecond collaboration.
-- **✦ VS Code-Grade Editor:** Built on Monaco Editor with syntax highlighting and language support.
-- **🎙️ WebRTC Voice & Video:** Built-in peer-to-peer video conferencing without leaving the editor.
-- **💬 Real-time Chat:** Integrated text chat synced seamlessly across the room.
-- **💻 Live Code Execution:** Run JavaScript, TypeScript, and Python directly in an interactive, resizable terminal inside the browser.
-- **🔒 Authentication & Cloud Saves:** Create an account to securely save your code files to the cloud using PostgreSQL and JWT auth.
-- **🎨 Modern Dark Mode UI:** A gorgeous, responsive, Raycast-inspired minimalist interface.
+- **Conflict-Free Real-time Sync:** Powered by Yjs (CRDT) for sub-millisecond collaboration.
+- **VS Code-Grade Editor:** Built on Monaco Editor with syntax highlighting and language support.
+- **WebRTC Voice & Video:** Built-in peer-to-peer video conferencing without leaving the editor.
+- **Real-time Chat:** Integrated text chat synced seamlessly across the room.
+- **Live Code Execution:** Run JavaScript, TypeScript, and Python directly in an interactive, resizable terminal inside the browser.
+- **Authentication & Cloud Saves:** Create an account to securely save your code files to the cloud using PostgreSQL and JWT auth.
+- **Modern Dark Mode UI:** A gorgeous, responsive, Raycast-inspired minimalist interface.
 
 ## Tech Stack
 
