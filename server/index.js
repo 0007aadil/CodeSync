@@ -160,11 +160,28 @@ app.post('/api/run', (req, res) => {
 // === HTTP Server ===
 const server = http.createServer(app);
 
-// === WebSocket Server (Yjs sync) ===
-const wss = new WebSocketServer({ server, path: '/ws' });
+// === WebSocket Servers (noServer mode — manual upgrade routing) ===
+const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+const chatWss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+
+// Route upgrade requests to the correct WebSocket server
+server.on('upgrade', (request, socket, head) => {
+  const { pathname } = new URL(request.url, `http://localhost:${PORT}`);
+
+  if (pathname === '/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else if (pathname === '/chat') {
+    chatWss.handleUpgrade(request, socket, head, (ws) => {
+      chatWss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 
 wss.on('connection', (ws, req) => {
-  // Parse room ID and client ID from URL params
   const url = new URL(req.url, `http://localhost:${PORT}`);
   const roomId = url.searchParams.get('room');
   const clientId = url.searchParams.get('clientId') || nanoid(8);
@@ -176,9 +193,6 @@ wss.on('connection', (ws, req) => {
 
   handleConnection(ws, roomId, clientId);
 });
-
-// === WebSocket Server (Chat + WebRTC signaling) ===
-const chatWss = new WebSocketServer({ server, path: '/chat' });
 
 chatWss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);

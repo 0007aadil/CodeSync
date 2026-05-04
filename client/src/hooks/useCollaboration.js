@@ -320,14 +320,36 @@ export function useCollaboration(roomId, overrides = {}) {
     }
   }, [sendMessage, applyRemoteUpdate]);
 
+  // Store handlers in refs to avoid stale closure issues with connect
+  const handleSyncRef = useRef(handleSyncMessage);
+  handleSyncRef.current = handleSyncMessage;
+  const handleAwarenessRef = useRef(handleAwarenessMessage);
+  handleAwarenessRef.current = handleAwarenessMessage;
+
   /**
    * Connect to the WebSocket server
    */
   const connect = useCallback(() => {
     if (!roomId || !clientIdRef.current) return;
     
-    // Don't reconnect if already connected
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+    // Don't reconnect if already connected or connecting
+    if (wsRef.current) {
+      const state = wsRef.current.readyState;
+      if (state === WebSocket.OPEN || state === WebSocket.CONNECTING) return;
+      // Clean up dead connection
+      wsRef.current.onclose = null;
+      wsRef.current.onerror = null;
+      wsRef.current.onmessage = null;
+      try { wsRef.current.close(); } catch (e) {}
+      wsRef.current = null;
+    }
+
+    // Cap reconnect attempts to prevent infinite loops
+    if (reconnectAttempts.current > 15) {
+      console.warn('⚠️ Max reconnect attempts reached, stopping');
+      setConnectionStatus('disconnected');
+      return;
+    }
     
     const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000'}/ws?room=${roomId}&clientId=${clientIdRef.current}`;
     
@@ -354,37 +376,49 @@ export function useCollaboration(roomId, overrides = {}) {
     };
 
     ws.onmessage = (event) => {
-      const msg = new Uint8Array(event.data);
-      if (msg.length === 0) return;
+      try {
+        const msg = new Uint8Array(event.data);
+        if (msg.length === 0) return;
 
-      const msgType = msg[0];
-      const payload = msg.slice(1);
+        const msgType = msg[0];
+        const payload = msg.slice(1);
 
-      switch (msgType) {
-        case MSG_SYNC:
-          handleSyncMessage(payload);
-          break;
-        case MSG_AWARENESS:
-          handleAwarenessMessage(payload);
-          break;
+        switch (msgType) {
+          case MSG_SYNC:
+            handleSyncRef.current(payload);
+            break;
+          case MSG_AWARENESS:
+            handleAwarenessRef.current(payload);
+            break;
+        }
+      } catch (err) {
+        console.error('Error processing message:', err);
       }
     };
 
     ws.onclose = (event) => {
       console.log(`🔌 WebSocket closed: ${event.code}`);
       setConnectionStatus('disconnected');
-      wsRef.current = null;
-
-      // Auto-reconnect with exponential backoff
-      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
-      reconnectAttempts.current++;
-      reconnectTimerRef.current = setTimeout(connect, delay);
+      
+      // Only reconnect if this is still the active ws
+      if (wsRef.current === ws) {
+        wsRef.current = null;
+        // Auto-reconnect with exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
+        reconnectAttempts.current++;
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = setTimeout(connect, delay);
+      }
     };
 
     ws.onerror = (err) => {
       console.error('WebSocket error:', err);
     };
-  }, [roomId, sendMessage, sendAwareness, handleSyncMessage, handleAwarenessMessage]);
+  }, [roomId, sendAwareness]);
+
+  // Store connect in a ref so bindEditor stays stable
+  const connectRef = useRef(connect);
+  connectRef.current = connect;
 
   /**
    * Bind Monaco editor to Yjs document
@@ -470,8 +504,8 @@ export function useCollaboration(roomId, overrides = {}) {
     });
 
     // Connect WebSocket after editor is bound
-    connect();
-  }, [connect, sendMessage, sendAwareness]);
+    connectRef.current();
+  }, [sendMessage, sendAwareness]);
 
   /**
    * Cleanup on unmount

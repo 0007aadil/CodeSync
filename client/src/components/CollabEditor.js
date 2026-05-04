@@ -16,6 +16,9 @@ export default function CollabEditor({ language, onEditorReady, theme }) {
   const monacoRef = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const onEditorReadyRef = useRef(onEditorReady);
+  onEditorReadyRef.current = onEditorReady;
+
   const handleEditorDidMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
@@ -88,11 +91,11 @@ export default function CollabEditor({ language, onEditorReady, theme }) {
 
     setIsLoaded(true);
 
-    // Notify parent that editor is ready
-    if (onEditorReady) {
-      onEditorReady(editor, monaco);
+    // Notify parent that editor is ready (via ref to prevent re-mounts)
+    if (onEditorReadyRef.current) {
+      onEditorReadyRef.current(editor, monaco);
     }
-  }, [onEditorReady]);
+  }, []);
 
   return (
     <div className="editor-container" style={{ position: 'relative', width: '100%', height: '100%' }}>

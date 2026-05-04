@@ -175,6 +175,17 @@ function writeVarUint(num) {
  */
 export async function handleConnection(ws, roomName, clientId) {
   const room = await getOrCreateRoom(roomName);
+
+  // Close any stale connection with the same clientId (prevents ghost duplicates)
+  for (const client of room.clients) {
+    if (client._clientId === clientId && client !== ws) {
+      console.log(`🔄 Closing stale connection for ${clientId} in ${roomName}`);
+      client.onclose = null; // prevent its onclose from firing cleanup
+      try { client.close(4000, 'Replaced by new connection'); } catch (e) {}
+      room.clients.delete(client);
+    }
+  }
+
   room.clients.add(ws);
 
   ws._roomName = roomName;
@@ -182,21 +193,30 @@ export async function handleConnection(ws, roomName, clientId) {
 
   console.log(`👤 Client ${clientId} joined room ${roomName} (${room.clients.size} clients)`);
 
-  // Send sync step 1 — our state vector so client can send us what we're missing
-  const step1 = encodeSyncStep1(room.doc);
-  ws.send(step1);
+  // Handle errors to prevent crashes
+  ws.on('error', (err) => {
+    console.error(`❌ WS error for ${clientId} in ${roomName}:`, err.message);
+  });
 
-  // Also send the full doc state as step2 so client gets current content immediately
-  const fullState = Y.encodeStateAsUpdate(room.doc);
-  const step2Data = new Uint8Array(1 + fullState.length);
-  step2Data[0] = SYNC_STEP2;
-  step2Data.set(fullState, 1);
-  ws.send(encodeMessage(MSG_SYNC, step2Data));
+  try {
+    // Send sync step 1 — our state vector so client can send us what we're missing
+    const step1 = encodeSyncStep1(room.doc);
+    ws.send(step1);
 
-  // Send current awareness states to new client
-  for (const [cid, state] of room.awareness) {
-    const awarenessMsg = encodeAwarenessUpdate(cid, state);
-    ws.send(awarenessMsg);
+    // Also send the full doc state as step2 so client gets current content immediately
+    const fullState = Y.encodeStateAsUpdate(room.doc);
+    const step2Data = new Uint8Array(1 + fullState.length);
+    step2Data[0] = SYNC_STEP2;
+    step2Data.set(fullState, 1);
+    ws.send(encodeMessage(MSG_SYNC, step2Data));
+
+    // Send current awareness states to new client
+    for (const [cid, state] of room.awareness) {
+      const awarenessMsg = encodeAwarenessUpdate(cid, state);
+      ws.send(awarenessMsg);
+    }
+  } catch (err) {
+    console.error(`❌ Error sending initial sync to ${clientId}:`, err.message);
   }
 
   // Handle incoming messages
