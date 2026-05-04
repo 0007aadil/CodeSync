@@ -499,7 +499,7 @@ export default function RoomChat({ roomId, token, user, avatar, isOpen, onClose 
                 <div className="chat-msg-header">
                   <span className="chat-msg-avatar">
                     {msg.userId === user?.id 
-                      ? (user?.avatar || '🦊') 
+                      ? (avatar || user?.avatar || '🦊') 
                       : (participants.find(p => p.id === msg.userId)?.avatar || msg.avatar || '🦊')}
                   </span>
                   <span className="chat-msg-name">{msg.userId === user?.id ? 'You' : msg.username}</span>
