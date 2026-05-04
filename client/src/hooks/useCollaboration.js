@@ -94,19 +94,7 @@ export function useCollaboration(roomId, overrides = {}, authUser = null) {
     userColorRef.current = CURSOR_COLORS[hash % CURSOR_COLORS.length];
   }
 
-  // Synchronize username with logged-in user dynamically
-  useEffect(() => {
-    const targetName = authUser?.username || userNameRef.current;
-    if (userNameRef.current !== targetName) {
-      userNameRef.current = targetName;
-      try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-name', targetName); } catch (e) {}
-      
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        sendAwareness();
-      }
-    }
-    setLocalName(targetName);
-  }, [authUser?.username, sendAwareness]);
+  // Initialization logic removed from here, moving down
 
   /**
    * Send a raw binary message, queue if disconnected
@@ -138,6 +126,20 @@ export function useCollaboration(roomId, overrides = {}, authUser = null) {
     msg.set(payload, 1);
     sendMessage(msg);
   }, [sendMessage]);
+
+  // Synchronize username with logged-in user dynamically
+  useEffect(() => {
+    const targetName = authUser?.username || userNameRef.current;
+    if (userNameRef.current !== targetName) {
+      userNameRef.current = targetName;
+      try { if (typeof window !== 'undefined') sessionStorage.setItem('collab-user-name', targetName); } catch (e) {}
+      
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        sendAwareness();
+      }
+    }
+    setLocalName(targetName);
+  }, [authUser?.username, sendAwareness]);
 
   /**
    * Inject dynamic CSS for remote cursor colors
