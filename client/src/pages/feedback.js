@@ -7,22 +7,33 @@ export default function Feedback() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!feedback.trim()) return;
     
-    // Construct mailto link to send feedback directly to the requested email
-    const targetEmail = "aadilahsan007@gmail.com";
-    const subject = encodeURIComponent("CodeSync Feedback");
-    const body = encodeURIComponent(`User Email: ${email || 'Not provided'}\n\nFeedback:\n${feedback}`);
-    
-    // Open default email client
-    window.location.href = `mailto:${targetEmail}?subject=${subject}&body=${body}`;
+    try {
+      // Send silently via FormSubmit API
+      await fetch("https://formsubmit.co/ajax/aadilahsan007@gmail.com", {
+        method: "POST",
+        headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            _subject: "New CodeSync Feedback!",
+            email: email || "Not provided",
+            feedback: feedback
+        })
+      });
 
-    // Show success state
-    setSubmitted(true);
-    setFeedback('');
-    setEmail('');
+      // Show success state
+      setSubmitted(true);
+      setFeedback('');
+      setEmail('');
+    } catch (error) {
+      console.error("Failed to send feedback", error);
+      alert("Failed to send feedback. Please try again.");
+    }
   };
 
   return (
