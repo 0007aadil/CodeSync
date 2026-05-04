@@ -21,8 +21,12 @@ app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc)
     if (!origin) return callback(null, true);
-    // Allow any localhost origin
-    if (origin.match(/^https?:\/\/localhost(:\d+)?$/)) {
+    // Allow any localhost or LAN IP origin
+    if (origin.match(/^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/)) {
+      return callback(null, true);
+    }
+    // Allow Vercel deployments
+    if (origin.match(/\.vercel\.app$/)) {
       return callback(null, true);
     }
     // Allow configured production origins (comma-separated)
