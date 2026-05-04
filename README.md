@@ -1,6 +1,6 @@
 # ⚡ CodeSync — Real-time Collaborative Code Editor
 
-A web app where multiple people can edit the same file simultaneously and see each other's cursors live.
+A fully-featured collaborative code editing environment. Work together in real-time with live cursors, integrated voice/video calling, real-time chat, and an interactive code execution terminal.
 
 ## Architecture
 
@@ -27,16 +27,26 @@ A web app where multiple people can edit the same file simultaneously and see ea
 └──────────────────────────────────────────────────────────┘
 ```
 
+## Core Features
+
+- **⚡ Conflict-Free Real-time Sync:** Powered by Yjs (CRDT) for sub-millisecond collaboration.
+- **✦ VS Code-Grade Editor:** Built on Monaco Editor with syntax highlighting and language support.
+- **🎙️ WebRTC Voice & Video:** Built-in peer-to-peer video conferencing without leaving the editor.
+- **💬 Real-time Chat:** Integrated text chat synced seamlessly across the room.
+- **💻 Live Code Execution:** Run JavaScript, TypeScript, and Python directly in an interactive, resizable terminal inside the browser.
+- **🔒 Authentication & Cloud Saves:** Create an account to securely save your code files to the cloud using PostgreSQL and JWT auth.
+- **🎨 Modern Dark Mode UI:** A gorgeous, responsive, Raycast-inspired minimalist interface.
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js + React |
-| Code Editor | Monaco Editor (VS Code engine) |
-| Real-time Sync | Yjs CRDT (YATA algorithm) |
-| Backend | Node.js + Express |
-| WebSocket | `ws` library |
-| Cache | Redis |
+| Frontend | Next.js, React, Vanilla CSS |
+| Code Editor | Monaco Editor |
+| Real-time Sync | Yjs CRDT |
+| Communication | WebSockets + WebRTC |
+| Code Execution | Piston API Engine |
+| Backend | Node.js, Express, jsonwebtoken |
 | Database | PostgreSQL |
 | Containers | Docker Compose |
 
