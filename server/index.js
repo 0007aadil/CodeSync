@@ -25,8 +25,8 @@ app.use(cors({
     if (origin.match(/^https?:\/\/(localhost|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?$/)) {
       return callback(null, true);
     }
-    // Allow Vercel deployments
-    if (origin.match(/\.vercel\.app$/)) {
+    // Allow Vercel deployments and custom domains
+    if (origin.match(/\.vercel\.app$/) || origin === 'https://codesync.aadilahsan.tech') {
       return callback(null, true);
     }
     // Allow configured production origins (comma-separated)
@@ -34,7 +34,8 @@ app.use(cors({
     if (allowedOrigins.some(allowed => origin === allowed || origin.endsWith(allowed))) {
       return callback(null, true);
     }
-    callback(new Error('Not allowed by CORS'));
+    // Instead of throwing an error which causes a 500, just deny access gracefully
+    callback(null, false);
   },
   credentials: true,
 }));
