@@ -705,7 +705,7 @@ export default function RoomPage() {
               {isLoggedIn ? (
                 <div className="sidebar-account">
                   <div className="sidebar-account-info">
-                    <span className="sidebar-account-avatar">{authUser?.avatar || '🦊'}</span>
+                    <span className="sidebar-account-avatar">{userAvatar || authUser?.avatar || '🦊'}</span>
                     <div className="sidebar-account-details">
                       <span className="sidebar-account-name">{authUser?.username}</span>
                       <span className="sidebar-account-email">{authUser?.email}</span>
