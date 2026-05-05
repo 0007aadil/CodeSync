@@ -249,7 +249,9 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="landing-footer">
-          Built with <a href="https://yjs.dev" target="_blank" rel="noopener noreferrer">Yjs</a> · <a href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener noreferrer">Monaco</a> · <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">Next.js</a> · <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer">Source</a>
+          <span>&copy; {new Date().getFullYear()} CodeSync. All rights reserved.</span>
+          <span style={{ margin: '0 10px', opacity: 0.5 }}>|</span>
+          <a href="https://github.com/0007aadil/CodeSync" target="_blank" rel="noopener noreferrer">Source Code</a>
         </footer>
       </div>
     </>

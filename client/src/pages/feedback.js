@@ -117,7 +117,7 @@ export default function Feedback() {
         </div>
 
         <footer className="landing-footer">
-          Built with <a href="https://yjs.dev" target="_blank" rel="noopener noreferrer">Yjs</a> · <a href="https://microsoft.github.io/monaco-editor/" target="_blank" rel="noopener noreferrer">Monaco</a> · <a href="https://nextjs.org" target="_blank" rel="noopener noreferrer">Next.js</a>
+          <span>&copy; {new Date().getFullYear()} CodeSync. All rights reserved.</span>
         </footer>
       </div>
     </>
