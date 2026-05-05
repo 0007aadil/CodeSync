@@ -156,18 +156,25 @@ input,textarea { font-family:inherit; color:inherit; }
   animation:slideUp 0.9s ease;
 }
 .hero-pill {
-  padding:6px 14px;
-  background:rgba(255,255,255,0.04);
-  border:1px solid var(--border-subtle);
-  border-radius:100px;
-  font-size:0.75rem; font-weight:500;
-  color:var(--text-secondary);
-  transition:all var(--transition-fast);
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: default;
 }
 .hero-pill:hover {
-  background:rgba(255,255,255,0.07);
-  border-color:var(--border-default);
-  color:#fff;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 /* Right: Action Panel */

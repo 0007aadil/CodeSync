@@ -119,10 +119,10 @@ export default function Home() {
               Collaborative code editor with live cursors, conflict-free CRDT sync, and VS Code-grade editing. No signup required.
             </p>
             <div className="hero-pills">
-              <span className="hero-pill">⚡ Real-time sync</span>
-              <span className="hero-pill">👥 Live cursors</span>
-              <span className="hero-pill">✦ Monaco editor</span>
-              <span className="hero-pill">◆ Persistent</span>
+              <span className="hero-pill">Real-time sync</span>
+              <span className="hero-pill">Live cursors</span>
+              <span className="hero-pill">Monaco editor</span>
+              <span className="hero-pill">Persistent code</span>
             </div>
           </div>
 
